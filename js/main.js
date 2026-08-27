@@ -10,4 +10,11 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
+document.getElementById("start-btn").addEventListener("click", () => {
+  document.getElementById("start-screen").classList.add("hidden");
+
+  startGame();
+
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+});

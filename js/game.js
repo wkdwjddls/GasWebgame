@@ -10,6 +10,7 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 const state = {
+  started: false,
   score: 0,
   player: {
     x: 100,
@@ -19,12 +20,16 @@ const state = {
   },
 };
 
+function startGame() {
+  state.started = true;
+}
+
 function update(dt) {
+  if (!state.started) return;
+
   const p = state.player;
-  if (Input.isDown("ArrowLeft") || Input.isDown("a")) p.x -= p.speed * dt;
-  if (Input.isDown("ArrowRight") || Input.isDown("d")) p.x += p.speed * dt;
-  if (Input.isDown("ArrowUp") || Input.isDown("w")) p.y -= p.speed * dt;
-  if (Input.isDown("ArrowDown") || Input.isDown("s")) p.y += p.speed * dt;
+  p.x += Input.direction.x * p.speed * dt;
+  p.y += Input.direction.y * p.speed * dt;
 
   p.x = Math.max(0, Math.min(canvas.width - p.size, p.x));
   p.y = Math.max(0, Math.min(canvas.height - p.size, p.y));
