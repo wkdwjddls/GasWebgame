@@ -70,6 +70,20 @@ function addScore(amount) {
   state.score += amount;
 }
 
+function animateScoreCountUp(target, duration = 1200) {
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    finalScoreEl.textContent = Math.round(target * eased);
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
 function endGame() {
   if (state.phase === "ended") return;
 
@@ -79,8 +93,9 @@ function endGame() {
   countdownOverlay.classList.add("hidden");
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
-  finalScoreEl.textContent = state.score;
+  finalScoreEl.textContent = 0;
   endScreen.classList.remove("hidden");
+  animateScoreCountUp(state.score);
 }
 
 function update(dt) {
