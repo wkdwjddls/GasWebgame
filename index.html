@@ -3,19 +3,52 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>웹게임</title>
+<title>가스안전 지킴이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 <div id="game-container">
   <canvas id="game-canvas"></canvas>
+
+  <div id="timer-bar-wrap" class="hidden">
+    <div id="timer-bar-track">
+      <div id="timer-bar-fill"></div>
+    </div>
+    <span id="timer-text">3:00</span>
+  </div>
+
   <div id="hud">
-    <span id="score">Score: 0</span>
+    <span id="score">점수: 0</span>
+  </div>
+
+  <div id="test-controls" class="hidden">
+    <button id="add-score-btn" type="button">점수 +10 (테스트)</button>
+    <button id="end-game-btn" type="button">게임 종료 (테스트)</button>
+  </div>
+
+  <div id="countdown-overlay" class="hidden">
+    <span class="countdown-label">안전 점검 시작까지</span>
+    <span id="countdown-number">3</span>
   </div>
 
   <div id="start-screen">
-    <h1>웹게임</h1>
-    <button id="start-btn">시작하기</button>
+    <span class="badge">교육용 가스안전 게임</span>
+    <img class="mockup-image" src="assets/images/gas-safety-mockup.svg" alt="가스레인지, 가스통 밸브, 경보기를 점검하는 교육용 게임 목업 이미지" />
+    <h1>가스안전 지킴이</h1>
+    <p class="subtitle">가스레인지부터 밸브, 경보기까지<br />우리 집 가스안전 수칙을 게임으로 배워요</p>
+    <button id="start-btn">안전 점검 시작하기</button>
+  </div>
+
+  <div id="end-screen" class="hidden">
+    <span class="badge">점검 결과</span>
+    <h1>안전 점검 완료!</h1>
+    <p class="subtitle">최종 점수</p>
+    <div id="final-score">0</div>
+    <p class="edu-message">가스 냄새가 나면 불씨를 멀리하고 즉시 밸브부터 잠그세요.<br />전기 스위치를 켜거나 끄지 말고 창문을 열어 환기한 뒤 대피하세요.</p>
+    <button id="restart-btn">다시 점검하기</button>
   </div>
 </div>
 
