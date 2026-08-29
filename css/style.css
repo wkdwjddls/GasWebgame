@@ -185,6 +185,81 @@ html, body {
   text-align: center;
 }
 
+#suspect-intro-overlay,
+#accusation-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 20px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 183, 3, 0.12), transparent 55%),
+    linear-gradient(180deg, #182449 0%, #0c1330 100%);
+  color: #f4f6ff;
+  text-align: center;
+}
+
+.suspect-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+}
+
+.suspect-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 190px;
+  padding: 24px 16px;
+  background: rgba(24, 36, 73, 0.7);
+  border: 1px solid rgba(255, 183, 3, 0.35);
+  border-radius: 20px;
+  color: #f4f6ff;
+  font-family: "Noto Sans KR", sans-serif;
+}
+
+button.suspect-card {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.suspect-card:active {
+  transform: scale(0.96);
+  border-color: #ffb703;
+  background: rgba(255, 183, 3, 0.18);
+}
+
+.suspect-icon {
+  font-size: 56px;
+}
+
+.suspect-name {
+  font-weight: 700;
+  font-size: 18px;
+  color: #ffd166;
+}
+
+.suspect-role {
+  font-size: 14px;
+  color: #c7cff0;
+}
+
+.suspect-alibi {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #a9b2d6;
+}
+
 .badge {
   padding: 6px 18px;
   border-radius: 999px;
@@ -197,8 +272,8 @@ html, body {
 }
 
 .mockup-image {
-  width: min(420px, 82vw);
-  max-height: 38vh;
+  width: min(520px, 92vw);
+  max-height: 48vh;
   object-fit: contain;
   border-radius: 20px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
@@ -238,7 +313,8 @@ html, body {
 }
 
 #start-btn,
-#restart-btn {
+#restart-btn,
+#intro-start-btn {
   margin-top: 10px;
   min-height: 56px;
   padding: 18px 56px;
@@ -255,6 +331,7 @@ html, body {
 }
 
 #start-btn:active,
-#restart-btn:active {
+#restart-btn:active,
+#intro-start-btn:active {
   transform: scale(0.96);
 }

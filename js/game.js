@@ -10,10 +10,43 @@ const countdownOverlay = document.getElementById("countdown-overlay");
 const countdownNumber = document.getElementById("countdown-number");
 const endScreen = document.getElementById("end-screen");
 const finalScoreEl = document.getElementById("final-score");
+const endTitleEl = document.getElementById("end-title");
+const endMessageEl = document.getElementById("end-message");
+const suspectIntroOverlay = document.getElementById("suspect-intro-overlay");
+const suspectIntroList = document.getElementById("suspect-intro-list");
+const accusationOverlay = document.getElementById("accusation-overlay");
+const accusationList = document.getElementById("accusation-list");
 
 const TIME_LIMIT = 180; // 3분
 const COUNTDOWN_SECONDS = 3;
 const LOW_TIME_THRESHOLD = 30;
+
+const SUSPECTS = [
+  {
+    id: "cook",
+    name: "용의자 A",
+    role: "가스레인지로 요리를 하고 있었어요",
+    icon: "🧑‍🍳",
+    alibi: "튀김 요리 중이라 자리를 비운 적 없다고 주장합니다.",
+    tip: "조리 중에는 절대 자리를 비우지 마세요. 불씨 곁은 항상 지켜봐야 해요.",
+  },
+  {
+    id: "repair",
+    name: "용의자 B",
+    role: "설비 기사",
+    icon: "🔧",
+    alibi: "가스 냄새가 나서 전등을 켰어요",
+    tip: "가스가 누출된 상황에서는 전기 스위치를 조작하면 안돼요",
+  },
+  {
+    id: "student",
+    name: "용의자 C",
+    role: "자취생",
+    icon: "🧑‍🎓",
+    alibi: "사고직전 주방을 떠났다",
+    tip: "가스를 사용할 때는 항상 창문을 열어 환기해주세요.",
+  },
+];
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -28,6 +61,8 @@ const state = {
   score: 0,
   countdown: COUNTDOWN_SECONDS,
   timeRemaining: TIME_LIMIT,
+  culpritId: null,
+  correctGuess: null,
   player: {
     x: 100,
     y: 100,
@@ -50,6 +85,59 @@ function updateTimerDisplay() {
   timerBarWrap.classList.toggle("warning", state.timeRemaining <= LOW_TIME_THRESHOLD);
 }
 
+function renderSuspectCard(suspect, clickable) {
+  const el = document.createElement(clickable ? "button" : "div");
+  if (clickable) el.type = "button";
+  el.className = "suspect-card";
+  el.innerHTML = `
+    <span class="suspect-icon">${suspect.icon}</span>
+    <span class="suspect-name">${suspect.name}</span>
+    <span class="suspect-role">${suspect.role}</span>
+    <span class="suspect-alibi">${suspect.alibi}</span>
+  `;
+  if (clickable) {
+    el.addEventListener("click", () => resolveAccusation(suspect.id));
+  }
+  return el;
+}
+
+function showSuspectIntro() {
+  state.culpritId = SUSPECTS[Math.floor(Math.random() * SUSPECTS.length)].id;
+  state.correctGuess = null;
+
+  suspectIntroList.innerHTML = "";
+  SUSPECTS.forEach((suspect) => {
+    suspectIntroList.appendChild(renderSuspectCard(suspect, false));
+  });
+  suspectIntroOverlay.classList.remove("hidden");
+}
+
+function enterAccusationPhase() {
+  if (state.phase !== "playing") return;
+  state.phase = "accusation";
+
+  testControls.classList.add("hidden");
+  timerBarWrap.classList.add("hidden");
+
+  accusationList.innerHTML = "";
+  SUSPECTS.forEach((suspect) => {
+    accusationList.appendChild(renderSuspectCard(suspect, true));
+  });
+  accusationOverlay.classList.remove("hidden");
+}
+
+function resolveAccusation(suspectId) {
+  if (state.phase !== "accusation") return;
+
+  state.correctGuess = suspectId === state.culpritId;
+  if (state.correctGuess) {
+    state.score += 50;
+  }
+
+  accusationOverlay.classList.add("hidden");
+  endGame();
+}
+
 function startGame() {
   state.started = true;
   state.phase = "countdown";
@@ -58,6 +146,7 @@ function startGame() {
   state.score = 0;
 
   endScreen.classList.add("hidden");
+  accusationOverlay.classList.add("hidden");
   testControls.classList.remove("hidden");
   timerBarWrap.classList.remove("hidden");
   countdownOverlay.classList.remove("hidden");
@@ -93,6 +182,20 @@ function endGame() {
   countdownOverlay.classList.add("hidden");
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
+  accusationOverlay.classList.add("hidden");
+
+  const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
+  if (state.correctGuess === true) {
+    endTitleEl.textContent = "사건 해결! 🎉";
+    endMessageEl.textContent = `범인은 바로 ${culprit.name}(${culprit.role})였습니다! ${culprit.tip}`;
+  } else if (state.correctGuess === false) {
+    endTitleEl.textContent = "추리 실패...";
+    endMessageEl.textContent = `아쉽지만 진범은 ${culprit.name}(${culprit.role})였습니다. ${culprit.tip}`;
+  } else {
+    endTitleEl.textContent = "안전 점검 완료!";
+    endMessageEl.textContent = "가스 냄새가 나면 불씨를 멀리하고 즉시 밸브부터 잠그세요.";
+  }
+
   finalScoreEl.textContent = 0;
   endScreen.classList.remove("hidden");
   animateScoreCountUp(state.score);
@@ -118,7 +221,7 @@ function update(dt) {
   if (state.timeRemaining <= 0) {
     state.timeRemaining = 0;
     updateTimerDisplay();
-    endGame();
+    enterAccusationPhase();
     return;
   }
   updateTimerDisplay();

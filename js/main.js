@@ -13,10 +13,15 @@ function loop(timestamp) {
 document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("start-screen").classList.add("hidden");
 
-  startGame();
+  showSuspectIntro();
 
   lastTime = performance.now();
   requestAnimationFrame(loop);
+});
+
+document.getElementById("intro-start-btn").addEventListener("click", () => {
+  document.getElementById("suspect-intro-overlay").classList.add("hidden");
+  startGame();
 });
 
 document.getElementById("add-score-btn").addEventListener("click", () => {
@@ -24,7 +29,7 @@ document.getElementById("add-score-btn").addEventListener("click", () => {
 });
 
 document.getElementById("end-game-btn").addEventListener("click", () => {
-  endGame();
+  enterAccusationPhase();
 });
 
 document.getElementById("restart-btn").addEventListener("click", () => {
