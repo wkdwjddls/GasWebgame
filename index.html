@@ -11,7 +11,22 @@
 </head>
 <body>
 <div id="game-container">
-  <canvas id="game-canvas"></canvas>
+  <div id="room-stage" class="hidden">
+    <div id="room-view">
+      <div id="room-bg"></div>
+      <div id="room-objects"></div>
+    </div>
+    <button id="room-arrow-left" class="room-arrow" type="button" aria-label="이전 방으로 이동">‹</button>
+    <button id="room-arrow-right" class="room-arrow" type="button" aria-label="다음 방으로 이동">›</button>
+    <div id="room-info">
+      <span id="room-name"></span>
+      <span id="room-indicator"></span>
+    </div>
+  </div>
+
+  <div id="message-bubble">
+    <p id="message-text"></p>
+  </div>
 
   <div id="timer-bar-wrap" class="hidden">
     <div id="timer-bar-track">
@@ -42,6 +57,17 @@
     <button id="start-btn">추리 시작하기</button>
   </div>
 
+  <div id="incident-cutscene" class="hidden">
+    <span class="badge badge-alert">사건 발생</span>
+    <span class="cutscene-icon">🚨</span>
+    <div class="cutscene-lines">
+      <p class="cutscene-line">오늘 새벽, 한 가정집에서 강한 가스 냄새가 난다는 신고가 접수되었습니다.</p>
+      <p class="cutscene-line">다행히 폭발로 이어지진 않았지만, 자칫하면 큰 사고로 번질 뻔한 아찔한 상황이었습니다.</p>
+      <p class="cutscene-line">현장에는 세 명의 용의자가 있었습니다. 진술과 단서를 조사해 사고의 원인을 제공한 진범을 찾아주세요.</p>
+    </div>
+    <button id="cutscene-next-btn">용의자 확인하기</button>
+  </div>
+
   <div id="suspect-intro-overlay" class="hidden">
     <p class="subtitle">가스 사고 현장에서 발견된 용의자들입니다!</p>
     <div id="suspect-intro-list" class="suspect-list"></div>
@@ -59,6 +85,10 @@
     <h1 id="end-title">안전 점검 완료!</h1>
     <p class="subtitle">최종 점수</p>
     <div id="final-score">0</div>
+    <div id="time-bonus-row" class="hidden">
+      <span class="time-bonus-label">남은 시간 보너스</span>
+      <span id="time-bonus-clock">0:00</span>
+    </div>
     <p id="end-message" class="edu-message">가스 냄새가 나면 불씨를 멀리하고 즉시 밸브부터 잠그세요.<br />전기 스위치를 켜거나 끄지 말고 창문을 열어 환기한 뒤 대피하세요.</p>
     <button id="restart-btn">다시 추리하기</button>
   </div>

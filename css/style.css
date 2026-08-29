@@ -19,11 +19,6 @@ html, body {
   touch-action: none;
 }
 
-#game-canvas {
-  display: block;
-  background: #1e1e2f;
-}
-
 .hidden {
   display: none !important;
 }
@@ -32,10 +27,216 @@ html, body {
   position: absolute;
   top: 56px;
   left: 12px;
+  z-index: 16;
   color: #fff;
   font-size: 20px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   pointer-events: none;
+}
+
+/* 방 스테이지 */
+#room-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+#room-view {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#room-view.fade {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+#room-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #1c2748;
+}
+
+#room-bg::after {
+  content: attr(data-label);
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 18vw;
+  color: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+#room-objects {
+  position: absolute;
+  inset: 0;
+}
+
+.room-object {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.room-object-placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px dashed rgba(255, 183, 3, 0.55);
+  border-radius: 14px;
+  color: #f4f6ff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.room-object:active .room-object-placeholder {
+  transform: scale(0.94);
+}
+
+.room-object.checked .room-object-placeholder {
+  border-color: rgba(123, 224, 156, 0.7);
+  background: rgba(123, 224, 156, 0.1);
+  opacity: 0.65;
+}
+
+.room-object.checked .room-object-placeholder::after {
+  content: "✓";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #37c871;
+  color: #0c1330;
+  font-size: 13px;
+  font-weight: 900;
+  border-radius: 999px;
+}
+
+.room-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(12, 19, 48, 0.55);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  color: #ffd166;
+  font-size: 24px;
+  line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#room-arrow-left {
+  left: 12px;
+}
+
+#room-arrow-right {
+  right: 12px;
+}
+
+.room-arrow:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.room-arrow.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+#room-info {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(12, 19, 48, 0.55);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+  border-radius: 999px;
+  color: #f4f6ff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+#room-indicator {
+  color: #c7cff0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 하단 말풍선 */
+#message-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 88px;
+  z-index: 18;
+  width: calc(100% - 32px);
+  max-width: 460px;
+  padding: 20px 26px;
+  background: rgba(24, 36, 73, 0.96);
+  border: 1px solid rgba(255, 183, 3, 0.5);
+  border-radius: 20px;
+  color: #f4f6ff;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#message-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  border-width: 10px 10px 0 10px;
+  border-style: solid;
+  border-color: rgba(24, 36, 73, 0.96) transparent transparent transparent;
+}
+
+#message-bubble.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+#message-text {
+  font-size: 17px;
+  line-height: 1.65;
 }
 
 /* 상단 제한시간 바 */
@@ -185,6 +386,78 @@ html, body {
   text-align: center;
 }
 
+#incident-cutscene {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px 24px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(233, 79, 79, 0.16), transparent 55%),
+    linear-gradient(180deg, #241a3a 0%, #0c1330 100%);
+  color: #f4f6ff;
+  text-align: center;
+}
+
+.badge-alert {
+  border-color: #e94f4f;
+  background: rgba(233, 79, 79, 0.15);
+  color: #ff8686;
+}
+
+.cutscene-icon {
+  font-size: 64px;
+  filter: drop-shadow(0 4px 16px rgba(233, 79, 79, 0.5));
+}
+
+.cutscene-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+}
+
+@keyframes cutscene-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cutscene-line {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #c7cff0;
+  opacity: 0;
+  animation: cutscene-line-in 0.6s ease both;
+}
+
+.cutscene-line:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.cutscene-line:nth-child(2) {
+  animation-delay: 1.1s;
+}
+
+.cutscene-line:nth-child(3) {
+  animation-delay: 2s;
+}
+
+#cutscene-next-btn {
+  opacity: 0;
+  animation: cutscene-line-in 0.6s ease backwards;
+  animation-delay: 2.9s;
+}
+
 #suspect-intro-overlay,
 #accusation-overlay {
   position: absolute;
@@ -208,23 +481,36 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 18px;
+  gap: 20px;
   width: 100%;
-  max-width: 640px;
+  max-width: 720px;
+}
+
+@keyframes suspect-card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .suspect-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: 190px;
-  padding: 24px 16px;
+  gap: 12px;
+  width: 220px;
+  padding: 30px 20px;
   background: rgba(24, 36, 73, 0.7);
   border: 1px solid rgba(255, 183, 3, 0.35);
-  border-radius: 20px;
+  border-radius: 22px;
   color: #f4f6ff;
   font-family: "Noto Sans KR", sans-serif;
+  opacity: 0;
+  animation: suspect-card-pop 1.1s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 button.suspect-card {
@@ -240,22 +526,22 @@ button.suspect-card:active {
 }
 
 .suspect-icon {
-  font-size: 56px;
+  font-size: 64px;
 }
 
 .suspect-name {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
   color: #ffd166;
 }
 
 .suspect-role {
-  font-size: 14px;
+  font-size: 15px;
   color: #c7cff0;
 }
 
 .suspect-alibi {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   color: #a9b2d6;
 }
@@ -301,6 +587,31 @@ button.suspect-card:active {
   text-shadow: 0 2px 12px rgba(255, 128, 0, 0.35);
 }
 
+#time-bonus-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  background: rgba(255, 183, 3, 0.12);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  border-radius: 999px;
+  color: #ffd166;
+}
+
+.time-bonus-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c7cff0;
+}
+
+#time-bonus-clock {
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 18px;
+  color: #ffd166;
+  min-width: 48px;
+  text-align: center;
+}
+
 .edu-message {
   max-width: 480px;
   font-size: 16px;
@@ -314,7 +625,8 @@ button.suspect-card:active {
 
 #start-btn,
 #restart-btn,
-#intro-start-btn {
+#intro-start-btn,
+#cutscene-next-btn {
   margin-top: 10px;
   min-height: 56px;
   padding: 18px 56px;
@@ -332,6 +644,7 @@ button.suspect-card:active {
 
 #start-btn:active,
 #restart-btn:active,
-#intro-start-btn:active {
+#intro-start-btn:active,
+#cutscene-next-btn:active {
   transform: scale(0.96);
 }

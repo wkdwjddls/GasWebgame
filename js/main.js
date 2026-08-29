@@ -5,18 +5,21 @@ function loop(timestamp) {
   lastTime = timestamp;
 
   update(Math.min(dt, 0.1));
-  render();
 
   requestAnimationFrame(loop);
 }
 
 document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("start-screen").classList.add("hidden");
-
-  showSuspectIntro();
+  document.getElementById("incident-cutscene").classList.remove("hidden");
 
   lastTime = performance.now();
   requestAnimationFrame(loop);
+});
+
+document.getElementById("cutscene-next-btn").addEventListener("click", () => {
+  document.getElementById("incident-cutscene").classList.add("hidden");
+  showSuspectIntro();
 });
 
 document.getElementById("intro-start-btn").addEventListener("click", () => {

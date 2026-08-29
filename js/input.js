@@ -1,56 +1,51 @@
-const Input = {
-  direction: { x: 0, y: 0 },
-};
+(function setupRoomSwipe() {
+  const stage = document.getElementById("room-stage");
+  const DRAG_THRESHOLD = 60;
+  const MOVE_DEADZONE = 10;
 
-(function setupTouchDrag() {
-  const surface = document.getElementById("game-container");
-  const maxRadius = 60;
+  let pointerId = null;
+  let startX = 0;
+  let moved = false;
 
-  let activeTouchId = null;
-  let originX = 0;
-  let originY = 0;
+  function onPointerDown(e) {
+    if (pointerId !== null) return;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    moved = false;
+  }
 
-  function findTouch(touchList) {
-    for (const touch of touchList) {
-      if (touch.identifier === activeTouchId) return touch;
+  function onPointerMove(e) {
+    if (e.pointerId !== pointerId) return;
+    if (Math.abs(e.clientX - startX) > MOVE_DEADZONE) {
+      moved = true;
     }
-    return null;
   }
 
-  function handleStart(e) {
-    if (activeTouchId !== null) return;
-    const touch = e.changedTouches[0];
-    activeTouchId = touch.identifier;
-    originX = touch.clientX;
-    originY = touch.clientY;
-  }
+  function onPointerUp(e) {
+    if (e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    pointerId = null;
 
-  function handleMove(e) {
-    const touch = findTouch(e.changedTouches);
-    if (!touch) return;
-    e.preventDefault();
-
-    let dx = touch.clientX - originX;
-    let dy = touch.clientY - originY;
-    const dist = Math.hypot(dx, dy);
-    if (dist > maxRadius) {
-      dx = (dx / dist) * maxRadius;
-      dy = (dy / dist) * maxRadius;
+    if (Math.abs(dx) >= DRAG_THRESHOLD && typeof goToRoom === "function") {
+      goToRoom(dx > 0 ? -1 : 1);
     }
-    Input.direction.x = dx / maxRadius;
-    Input.direction.y = dy / maxRadius;
   }
 
-  function handleEnd(e) {
-    const touch = findTouch(e.changedTouches);
-    if (!touch) return;
-    activeTouchId = null;
-    Input.direction.x = 0;
-    Input.direction.y = 0;
+  function onPointerCancel(e) {
+    if (e.pointerId !== pointerId) return;
+    pointerId = null;
   }
 
-  surface.addEventListener("touchstart", handleStart, { passive: true });
-  surface.addEventListener("touchmove", handleMove, { passive: false });
-  surface.addEventListener("touchend", handleEnd, { passive: true });
-  surface.addEventListener("touchcancel", handleEnd, { passive: true });
+  function suppressClickAfterDrag(e) {
+    if (moved && e.target.closest(".room-object")) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }
+
+  stage.addEventListener("pointerdown", onPointerDown);
+  stage.addEventListener("pointermove", onPointerMove);
+  stage.addEventListener("pointerup", onPointerUp);
+  stage.addEventListener("pointercancel", onPointerCancel);
+  stage.addEventListener("click", suppressClickAfterDrag, true);
 })();
