@@ -32,7 +32,7 @@ document.getElementById("add-score-btn").addEventListener("click", () => {
 });
 
 document.getElementById("end-game-btn").addEventListener("click", () => {
-  enterAccusationPhase();
+  enterQuizPhase();
 });
 
 document.getElementById("restart-btn").addEventListener("click", () => {

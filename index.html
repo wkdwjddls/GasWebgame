@@ -74,6 +74,22 @@
     <button id="intro-start-btn">수사 시작!</button>
   </div>
 
+  <div id="quiz-overlay" class="hidden">
+    <div class="quiz-header">
+      <span class="badge">안전 상식 퀴즈</span>
+      <h1 id="quiz-question"></h1>
+    </div>
+    <div id="quiz-choices">
+      <button id="quiz-choice-left" class="quiz-choice" type="button">
+        <span id="quiz-choice-left-text"></span>
+      </button>
+      <button id="quiz-choice-right" class="quiz-choice" type="button">
+        <span id="quiz-choice-right-text"></span>
+      </button>
+    </div>
+    <p id="quiz-feedback" class="quiz-feedback"></p>
+  </div>
+
   <div id="accusation-overlay" class="hidden">
     <span class="badge">최종 추리</span>
     <h1>범인을 지목하세요!</h1>

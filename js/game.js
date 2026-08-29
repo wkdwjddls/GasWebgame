@@ -26,11 +26,19 @@ const suspectIntroOverlay = document.getElementById("suspect-intro-overlay");
 const suspectIntroList = document.getElementById("suspect-intro-list");
 const accusationOverlay = document.getElementById("accusation-overlay");
 const accusationList = document.getElementById("accusation-list");
+const quizOverlay = document.getElementById("quiz-overlay");
+const quizQuestionEl = document.getElementById("quiz-question");
+const quizChoiceLeft = document.getElementById("quiz-choice-left");
+const quizChoiceRight = document.getElementById("quiz-choice-right");
+const quizChoiceLeftText = document.getElementById("quiz-choice-left-text");
+const quizChoiceRightText = document.getElementById("quiz-choice-right-text");
+const quizFeedbackEl = document.getElementById("quiz-feedback");
 
 const TIME_LIMIT = 180; // 3분
 const COUNTDOWN_SECONDS = 3;
 const LOW_TIME_THRESHOLD = 30;
 const TIME_BONUS_PER_SECOND = 1; // 남은 시간 1초당 점수
+const QUIZ_BONUS = 100;
 
 const SUSPECTS = [
   {
@@ -89,9 +97,36 @@ const ROOMS = [
   },
 ];
 
+const QUIZZES = [
+  {
+    question: "가스 냄새가 날 때 가장 먼저 해야 할 행동은?",
+    options: [
+      { text: "창문을 열어 환기한다", correct: true },
+      { text: "전등 스위치를 켠다", correct: false },
+    ],
+    explanation: "가스가 누출되면 즉시 창문을 열어 환기하고 밸브를 잠가야 해요. 전기 스위치 조작은 불꽃을 일으켜 위험해요!",
+  },
+  {
+    question: "가스레인지 사용 후 반드시 해야 할 일은?",
+    options: [
+      { text: "중간 밸브를 잠근다", correct: true },
+      { text: "그대로 외출한다", correct: false },
+    ],
+    explanation: "사용 후 밸브를 잠그지 않으면 가스가 계속 새어 나올 수 있어요. 사용 후엔 꼭 밸브를 잠가주세요!",
+  },
+  {
+    question: "가스가 새는지 확인할 때 좋은 방법은?",
+    options: [
+      { text: "비눗물을 발라 확인한다", correct: true },
+      { text: "라이터 불로 확인한다", correct: false },
+    ],
+    explanation: "라이터 같은 불씨로 확인하면 폭발할 수 있어 매우 위험해요. 반드시 비눗물 거품으로 누출 여부를 확인하세요!",
+  },
+];
+
 const state = {
   started: false,
-  phase: "idle", // idle | countdown | playing | accusation | ended
+  phase: "idle", // idle | countdown | playing | quiz | accusation | ended
   score: 0,
   countdown: COUNTDOWN_SECONDS,
   timeRemaining: TIME_LIMIT,
@@ -99,6 +134,7 @@ const state = {
   correctGuess: null,
   roomIndex: 0,
   interactedObjects: new Set(),
+  currentQuiz: null,
 };
 
 let messageHideTimer = null;
@@ -212,14 +248,63 @@ function showSuspectIntro() {
   suspectIntroOverlay.classList.remove("hidden");
 }
 
-function enterAccusationPhase() {
+function enterQuizPhase() {
   if (state.phase !== "playing") return;
-  state.phase = "accusation";
+  state.phase = "quiz";
 
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
   roomStage.classList.add("hidden");
   hideMessage();
+
+  const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
+  state.currentQuiz = quiz;
+
+  quizQuestionEl.textContent = quiz.question;
+  quizChoiceLeftText.textContent = quiz.options[0].text;
+  quizChoiceRightText.textContent = quiz.options[1].text;
+  quizChoiceLeft.classList.remove("correct", "wrong", "disabled");
+  quizChoiceRight.classList.remove("correct", "wrong", "disabled");
+  quizFeedbackEl.classList.remove("visible");
+  quizFeedbackEl.textContent = "";
+
+  quizOverlay.classList.remove("hidden");
+}
+
+function resolveQuiz(choiceIndex) {
+  if (state.phase !== "quiz" || !state.currentQuiz) return;
+
+  const quiz = state.currentQuiz;
+  const chosen = quiz.options[choiceIndex];
+  const choiceButtons = [quizChoiceLeft, quizChoiceRight];
+
+  choiceButtons.forEach((btn) => btn.classList.add("disabled"));
+  quiz.options.forEach((opt, i) => {
+    if (opt.correct) choiceButtons[i].classList.add("correct");
+    else if (i === choiceIndex) choiceButtons[i].classList.add("wrong");
+  });
+
+  if (chosen.correct) {
+    state.score += QUIZ_BONUS;
+    scoreEl.textContent = `점수: ${state.score}`;
+    quizFeedbackEl.textContent = `정답입니다! +${QUIZ_BONUS}점  ${quiz.explanation}`;
+  } else {
+    quizFeedbackEl.textContent = `아쉽지만 오답이에요.  ${quiz.explanation}`;
+  }
+  quizFeedbackEl.classList.add("visible");
+
+  setTimeout(() => {
+    quizOverlay.classList.add("hidden");
+    enterAccusationPhase();
+  }, 2200);
+}
+
+quizChoiceLeft.addEventListener("click", () => resolveQuiz(0));
+quizChoiceRight.addEventListener("click", () => resolveQuiz(1));
+
+function enterAccusationPhase() {
+  if (state.phase !== "quiz") return;
+  state.phase = "accusation";
 
   accusationList.innerHTML = "";
   SUSPECTS.forEach((suspect, index) => {
@@ -252,6 +337,7 @@ function startGame() {
   endScreen.classList.add("hidden");
   timeBonusRow.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
+  quizOverlay.classList.add("hidden");
   roomStage.classList.add("hidden");
   hideMessage();
   testControls.classList.remove("hidden");
@@ -318,6 +404,7 @@ function endGame() {
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
+  quizOverlay.classList.add("hidden");
   roomStage.classList.add("hidden");
   hideMessage();
 
@@ -369,7 +456,7 @@ function update(dt) {
   if (state.timeRemaining <= 0) {
     state.timeRemaining = 0;
     updateTimerDisplay();
-    enterAccusationPhase();
+    enterQuizPhase();
     return;
   }
   updateTimerDisplay();
