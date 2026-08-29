@@ -20,7 +20,6 @@
     <button id="room-arrow-right" class="room-arrow" type="button" aria-label="다음 방으로 이동">›</button>
     <div id="room-info">
       <span id="room-name"></span>
-      <span id="room-indicator"></span>
     </div>
   </div>
 
@@ -41,6 +40,60 @@
       </div>
       <div id="notebook-entries"></div>
     </div>
+  </div>
+
+  <div id="window-event-overlay">
+    <button id="window-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">환기 중</span>
+    <h1>창문을 여러 번 터치해서 활짝 열어주세요!</h1>
+    <button id="window-tap-target" type="button">
+      <svg class="window-svg" viewBox="0 0 100 112" aria-hidden="true">
+        <defs>
+          <clipPath id="window-frame-clip">
+            <rect x="10" y="8" width="80" height="80" rx="4"></rect>
+          </clipPath>
+          <clipPath id="window-closed-clip">
+            <rect id="window-pane" x="10" y="8" width="80" height="80"></rect>
+          </clipPath>
+          <clipPath id="window-open-clip">
+            <rect id="window-open-clip-rect" x="90" y="8" width="0" height="80"></rect>
+          </clipPath>
+        </defs>
+        <rect x="2" y="0" width="96" height="96" rx="10" class="window-casing"></rect>
+        <rect x="10" y="8" width="80" height="80" rx="4" class="window-frame-rect"></rect>
+
+        <g clip-path="url(#window-frame-clip)">
+          <!-- 열린 창문: 유리가 걷힌 자리에만 정확히 드러나는 개방된 틈, 바람이 통하는 모습 -->
+          <g clip-path="url(#window-open-clip)">
+            <path d="M12 30 q8 -7 16 0 q8 7 16 0 q8 -7 16 0 q8 7 16 0" class="window-breeze window-breeze-1"></path>
+            <path d="M10 50 q8 -7 16 0 q8 7 16 0 q8 -7 16 0 q8 7 16 0" class="window-breeze window-breeze-2"></path>
+            <path d="M12 70 q8 -7 16 0 q8 7 16 0 q8 -7 16 0 q8 7 16 0" class="window-breeze window-breeze-3"></path>
+          </g>
+
+          <!-- 닫힌 창문: 탭할수록 폭이 줄어들며 걷혀 아래 열린 창문이 드러남 -->
+          <g clip-path="url(#window-closed-clip)">
+            <rect x="10" y="8" width="80" height="80" class="window-pane-rect"></rect>
+            <line x1="50" y1="8" x2="50" y2="88" class="window-mullion"></line>
+            <line x1="10" y1="48" x2="90" y2="48" class="window-mullion"></line>
+          </g>
+        </g>
+
+        <rect x="10" y="8" width="80" height="80" rx="4" class="window-frame-outline"></rect>
+        <rect x="-2" y="96" width="104" height="10" rx="4" class="window-sill"></rect>
+      </svg>
+    </button>
+    <div id="window-progress-track">
+      <div id="window-progress-fill"></div>
+    </div>
+    <span id="window-tap-count">0 / 20</span>
+  </div>
+
+  <div id="valve-event-overlay">
+    <button id="valve-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">밸브 점검</span>
+    <h1>열려 있는 밸브 3개를 찾아 모두 잠가주세요!</h1>
+    <div id="valve-grid"></div>
+    <span id="valve-progress-text">열린 밸브 3개</span>
   </div>
 
   <div id="timer-bar-wrap" class="hidden">

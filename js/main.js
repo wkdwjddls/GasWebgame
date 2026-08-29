@@ -9,16 +9,41 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
+const cutsceneOverlay = document.getElementById("incident-cutscene");
+const cutsceneLines = Array.from(document.querySelectorAll(".cutscene-line"));
+const cutsceneNextBtn = document.getElementById("cutscene-next-btn");
+let cutsceneRevealIndex = 0;
+
+function revealNextCutsceneLine() {
+  if (cutsceneRevealIndex < cutsceneLines.length) {
+    cutsceneLines[cutsceneRevealIndex].classList.add("revealed");
+    cutsceneRevealIndex++;
+  }
+  if (cutsceneRevealIndex >= cutsceneLines.length) {
+    cutsceneNextBtn.classList.add("revealed");
+  }
+}
+
+cutsceneOverlay.addEventListener("click", (e) => {
+  if (e.target.closest("#cutscene-next-btn")) return;
+  revealNextCutsceneLine();
+});
+
 document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("start-screen").classList.add("hidden");
-  document.getElementById("incident-cutscene").classList.remove("hidden");
+
+  cutsceneRevealIndex = 0;
+  cutsceneLines.forEach((line) => line.classList.remove("revealed"));
+  cutsceneNextBtn.classList.remove("revealed");
+  cutsceneOverlay.classList.remove("hidden");
+  revealNextCutsceneLine();
 
   lastTime = performance.now();
   requestAnimationFrame(loop);
 });
 
-document.getElementById("cutscene-next-btn").addEventListener("click", () => {
-  document.getElementById("incident-cutscene").classList.add("hidden");
+cutsceneNextBtn.addEventListener("click", () => {
+  cutsceneOverlay.classList.add("hidden");
   showSuspectIntro();
 });
 

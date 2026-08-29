@@ -176,9 +176,9 @@ html, body {
 #room-info {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  top: 56px;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 16;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -189,12 +189,6 @@ html, body {
   color: #f4f6ff;
   font-size: 14px;
   font-weight: 700;
-}
-
-#room-indicator {
-  color: #c7cff0;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 /* 하단 말풍선 */
@@ -410,6 +404,327 @@ html, body {
   color: #a9b2d6;
 }
 
+/* 창문 환기 이벤트 */
+#window-event-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 32px 24px;
+  background: linear-gradient(180deg, #182449 0%, #0c1330 100%);
+  color: #f4f6ff;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+#window-event-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#window-event-overlay h1 {
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 22px;
+  line-height: 1.4;
+  color: #ffd166;
+  max-width: 320px;
+}
+
+#window-event-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6ff;
+  font-size: 15px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#window-event-close:active {
+  transform: scale(0.92);
+}
+
+#window-tap-target {
+  width: 230px;
+  height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px dashed rgba(255, 183, 3, 0.55);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.window-svg {
+  width: 182px;
+  height: 204px;
+}
+
+.window-casing {
+  fill: rgba(244, 246, 255, 0.07);
+  stroke: rgba(244, 246, 255, 0.4);
+  stroke-width: 3;
+}
+
+.window-frame-rect {
+  fill: rgba(255, 214, 140, 0.16);
+}
+
+.window-frame-outline {
+  fill: none;
+  stroke: rgba(255, 183, 3, 0.55);
+  stroke-width: 3;
+}
+
+#window-pane,
+#window-open-clip-rect {
+  transition: width 0.2s ease, x 0.2s ease;
+}
+
+.window-pane-rect {
+  fill: rgba(120, 190, 255, 0.36);
+}
+
+.window-mullion {
+  stroke: rgba(244, 246, 255, 0.6);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.window-sill {
+  fill: rgba(244, 246, 255, 0.16);
+  stroke: rgba(244, 246, 255, 0.35);
+  stroke-width: 1.5;
+}
+
+.window-breeze {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: window-breeze-drift 2.2s ease-in-out infinite;
+}
+
+.window-breeze-2 {
+  animation-delay: 0.3s;
+}
+
+.window-breeze-3 {
+  animation-delay: 0.6s;
+}
+
+@keyframes window-breeze-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(6px);
+    opacity: 0.75;
+  }
+}
+
+@keyframes window-tap-bounce {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+#window-tap-target.tap-bounce {
+  animation: window-tap-bounce 0.18s ease;
+}
+
+#window-progress-track {
+  width: 220px;
+  height: 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  overflow: hidden;
+}
+
+#window-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffb703, #ffd166);
+  transition: width 0.15s ease;
+}
+
+#window-tap-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c7cff0;
+}
+
+/* 가스 밸브 점검 이벤트 */
+#valve-event-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 32px 24px;
+  background: linear-gradient(180deg, #182449 0%, #0c1330 100%);
+  color: #f4f6ff;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+#valve-event-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#valve-event-overlay h1 {
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 22px;
+  line-height: 1.4;
+  color: #ffd166;
+  max-width: 320px;
+}
+
+#valve-event-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6ff;
+  font-size: 15px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#valve-event-close:active {
+  transform: scale(0.92);
+}
+
+#valve-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: 328px;
+}
+
+.valve-cell {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 18px;
+  border: 2px solid rgba(255, 183, 3, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.valve-cell.open {
+  border-color: rgba(233, 79, 79, 0.7);
+  background: rgba(233, 79, 79, 0.18);
+}
+
+.valve-cell.closed {
+  border-color: rgba(123, 224, 156, 0.4);
+  background: rgba(123, 224, 156, 0.08);
+}
+
+.valve-svg {
+  width: 60px;
+  height: 60px;
+}
+
+.valve-pipe-line {
+  stroke: rgba(199, 207, 240, 0.5);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.valve-body-circle {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 183, 3, 0.6);
+  stroke-width: 3;
+}
+
+.valve-handle-line {
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.3s ease, stroke 0.2s ease;
+}
+
+.valve-cell.open .valve-handle-line {
+  transform: rotate(90deg);
+  stroke: #ff8686;
+}
+
+.valve-cell.closed .valve-handle-line {
+  transform: rotate(0deg);
+  stroke: #7be09c;
+}
+
+.valve-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c7cff0;
+}
+
+@keyframes valve-cell-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.88);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.valve-cell.pop {
+  animation: valve-cell-pop 0.2s ease;
+}
+
+#valve-progress-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c7cff0;
+}
+
 /* 상단 제한시간 바 */
 #timer-bar-wrap {
   position: absolute;
@@ -608,24 +923,22 @@ html, body {
   line-height: 1.7;
   color: #c7cff0;
   opacity: 0;
-  animation: cutscene-line-in 0.6s ease both;
 }
 
-.cutscene-line:nth-child(1) {
-  animation-delay: 0.2s;
-}
-
-.cutscene-line:nth-child(2) {
-  animation-delay: 1.1s;
-}
-
-.cutscene-line:nth-child(3) {
-  animation-delay: 2s;
+.cutscene-line.revealed {
+  opacity: 1;
+  animation: cutscene-line-in 0.4s ease;
 }
 
 #cutscene-next-btn {
-  animation: cutscene-line-in 0.6s ease backwards;
-  animation-delay: 2.9s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#cutscene-next-btn.revealed {
+  opacity: 1;
+  pointer-events: auto;
+  animation: cutscene-line-in 0.4s ease;
 }
 
 /* 안전 상식 퀴즈 */

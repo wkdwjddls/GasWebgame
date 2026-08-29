@@ -4,7 +4,6 @@ const roomView = document.getElementById("room-view");
 const roomBg = document.getElementById("room-bg");
 const roomObjectsEl = document.getElementById("room-objects");
 const roomNameEl = document.getElementById("room-name");
-const roomIndicatorEl = document.getElementById("room-indicator");
 const roomArrowLeft = document.getElementById("room-arrow-left");
 const roomArrowRight = document.getElementById("room-arrow-right");
 const messageBubble = document.getElementById("message-bubble");
@@ -14,6 +13,17 @@ const notebookBadge = document.getElementById("notebook-badge");
 const notebookOverlay = document.getElementById("notebook-overlay");
 const notebookCloseBtn = document.getElementById("notebook-close-btn");
 const notebookEntriesEl = document.getElementById("notebook-entries");
+const windowEventOverlay = document.getElementById("window-event-overlay");
+const windowEventClose = document.getElementById("window-event-close");
+const windowTapTarget = document.getElementById("window-tap-target");
+const windowTapCountEl = document.getElementById("window-tap-count");
+const windowProgressFill = document.getElementById("window-progress-fill");
+const windowPaneEl = document.getElementById("window-pane");
+const windowOpenClipRectEl = document.getElementById("window-open-clip-rect");
+const valveEventOverlay = document.getElementById("valve-event-overlay");
+const valveEventClose = document.getElementById("valve-event-close");
+const valveGridEl = document.getElementById("valve-grid");
+const valveProgressText = document.getElementById("valve-progress-text");
 
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
@@ -45,6 +55,9 @@ const COUNTDOWN_SECONDS = 3;
 const LOW_TIME_THRESHOLD = 30;
 const TIME_BONUS_PER_SECOND = 1; // 남은 시간 1초당 점수
 const QUIZ_BONUS = 100;
+const WINDOW_TAP_TARGET = 20; // 창문을 여는 데 필요한 터치 횟수
+const VALVE_GRID_SIZE = 9; // 3x3
+const VALVE_OPEN_COUNT = 3; // 열려있는 밸브 개수
 
 const SUSPECTS = [
   {
@@ -79,8 +92,8 @@ const ROOMS = [
     name: "주방",
     objects: [
       { id: "stove", name: "가스레인지", x: 35, y: 72, points: 100, message: "가스레인지 사용 후에는 반드시 밸브를 잠가주세요!" },
-      { id: "hose", name: "가스 호스", x: 62, y: 78, points: 100, message: "낡거나 금이 간 가스 호스는 즉시 새 것으로 교체하세요." },
-      { id: "window", name: "환기창", x: 82, y: 28, points: 100, message: "요리할 때는 창문을 열어 환기해주세요." },
+      { id: "valve", name: "가스 밸브", x: 40, y: 55, type: "valve", points: 100, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
+      { id: "window", name: "창문", x: 82, y: 28, type: "window", message: "요리할 때는 창문을 열어 환기해주세요." },
     ],
   },
   {
@@ -96,12 +109,15 @@ const ROOMS = [
     id: "boiler-room",
     name: "보일러실",
     objects: [
-      { id: "valve", name: "가스 밸브", x: 40, y: 55, points: 100, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
+      { id: "hose", name: "가스 호스", x: 62, y: 78, points: 100, message: "낡거나 금이 간 가스 호스는 즉시 새 것으로 교체하세요." },
       { id: "vent", name: "환기구", x: 75, y: 35, points: 100, message: "환기구를 막지 않아야 가스가 안전하게 배출돼요." },
       { id: "pipe", name: "배관 연결부", x: 25, y: 72, points: 100, message: "배관 연결부에 비눗물을 발라 가스 누출 여부를 점검하세요." },
+      { id: "cylinder", name: "가스용기", x: 20, y: 25, points: 100, message: "가스용기는 직사광선을 피해 서늘한 곳에 세워서 보관하고, 넘어지지 않도록 고정해두세요." },
     ],
   },
 ];
+
+const STARTING_ROOM_INDEX = ROOMS.findIndex((room) => room.id === "living-room");
 
 const QUIZZES = [
   {
@@ -138,7 +154,7 @@ const state = {
   timeRemaining: TIME_LIMIT,
   culpritId: null,
   correctGuess: null,
-  roomIndex: 0,
+  roomIndex: STARTING_ROOM_INDEX,
   interactedObjects: new Set(),
   currentQuiz: null,
   notebookEntries: [],
@@ -246,12 +262,188 @@ function interactObject(room, obj) {
   }
 }
 
+const WINDOW_FRAME_INSET = 10; // window frame rect's x/y offset in the SVG viewBox
+const WINDOW_FRAME_SIZE = 80; // window frame rect's full width in the SVG viewBox
+
+let windowEventRoom = null;
+let windowEventObj = null;
+let windowEventTaps = 0;
+
+function updateWindowPane() {
+  const progress = Math.min(1, windowEventTaps / WINDOW_TAP_TARGET);
+  const closedWidth = WINDOW_FRAME_SIZE * (1 - progress);
+  windowPaneEl.setAttribute("width", closedWidth.toFixed(2));
+
+  // the "open" layer is only ever drawn in the region the closed pane has vacated
+  const openX = WINDOW_FRAME_INSET + closedWidth;
+  const openWidth = WINDOW_FRAME_SIZE - closedWidth;
+  windowOpenClipRectEl.setAttribute("x", openX.toFixed(2));
+  windowOpenClipRectEl.setAttribute("width", openWidth.toFixed(2));
+}
+
+function openWindowEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  windowEventRoom = room;
+  windowEventObj = obj;
+  windowEventTaps = 0;
+
+  windowTapCountEl.textContent = `0 / ${WINDOW_TAP_TARGET}`;
+  windowProgressFill.style.width = "0%";
+  updateWindowPane();
+  windowEventOverlay.classList.add("visible");
+}
+
+function handleWindowTap() {
+  if (windowEventTaps >= WINDOW_TAP_TARGET) return;
+
+  windowEventTaps++;
+  addScore(1);
+
+  windowTapCountEl.textContent = `${windowEventTaps} / ${WINDOW_TAP_TARGET}`;
+  windowProgressFill.style.width = `${(windowEventTaps / WINDOW_TAP_TARGET) * 100}%`;
+  updateWindowPane();
+
+  windowTapTarget.classList.remove("tap-bounce");
+  void windowTapTarget.offsetWidth; // restart the bounce animation on every tap
+  windowTapTarget.classList.add("tap-bounce");
+
+  if (windowEventTaps >= WINDOW_TAP_TARGET) {
+    completeWindowEvent();
+  }
+}
+
+function completeWindowEvent() {
+  const room = windowEventRoom;
+  const obj = windowEventObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    windowEventOverlay.classList.remove("visible");
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 500);
+}
+
+windowTapTarget.addEventListener("click", handleWindowTap);
+windowEventClose.addEventListener("click", () => {
+  windowEventOverlay.classList.remove("visible");
+});
+
+let valveEventRoom = null;
+let valveEventObj = null;
+let valveOpenRemaining = 0;
+
+function openValveEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  valveEventRoom = room;
+  valveEventObj = obj;
+  valveOpenRemaining = VALVE_OPEN_COUNT;
+
+  const indices = Array.from({ length: VALVE_GRID_SIZE }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const openSet = new Set(indices.slice(0, VALVE_OPEN_COUNT));
+
+  valveGridEl.innerHTML = "";
+  for (let i = 0; i < VALVE_GRID_SIZE; i++) {
+    const isOpen = openSet.has(i);
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = `valve-cell ${isOpen ? "open" : "closed"}`;
+    cell.innerHTML = `
+      <svg class="valve-svg" viewBox="0 0 64 64" aria-hidden="true">
+        <line x1="32" y1="2" x2="32" y2="20" class="valve-pipe-line"></line>
+        <line x1="32" y1="44" x2="32" y2="62" class="valve-pipe-line"></line>
+        <circle cx="32" cy="32" r="12" class="valve-body-circle"></circle>
+        <line x1="17" y1="32" x2="47" y2="32" class="valve-handle-line"></line>
+      </svg>
+      <span class="valve-label">${isOpen ? "열림" : "잠김"}</span>
+    `;
+    cell.addEventListener("click", () => handleValveTap(cell));
+    valveGridEl.appendChild(cell);
+  }
+
+  valveProgressText.textContent = `열린 밸브 ${valveOpenRemaining}개`;
+  valveEventOverlay.classList.add("visible");
+}
+
+function handleValveTap(cell) {
+  const isOpen = cell.classList.contains("open");
+
+  if (isOpen) {
+    cell.classList.remove("open");
+    cell.classList.add("closed");
+    cell.querySelector(".valve-label").textContent = "잠김";
+    valveOpenRemaining--;
+  } else {
+    cell.classList.remove("closed");
+    cell.classList.add("open");
+    cell.querySelector(".valve-label").textContent = "열림";
+    valveOpenRemaining++;
+  }
+
+  cell.classList.remove("pop");
+  void cell.offsetWidth; // restart the pop animation on every tap
+  cell.classList.add("pop");
+
+  valveProgressText.textContent = `열린 밸브 ${valveOpenRemaining}개`;
+
+  if (valveOpenRemaining <= 0) {
+    completeValveEvent();
+  }
+}
+
+function completeValveEvent() {
+  const room = valveEventRoom;
+  const obj = valveEventObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    valveEventOverlay.classList.remove("visible");
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 500);
+}
+
+valveEventClose.addEventListener("click", () => {
+  valveEventOverlay.classList.remove("visible");
+});
+
+const OBJECT_EVENT_HANDLERS = {
+  window: openWindowEvent,
+  valve: openValveEvent,
+};
+
+function handleObjectClick(room, obj) {
+  const key = `${room.id}:${obj.id}`;
+  const eventHandler = OBJECT_EVENT_HANDLERS[obj.type];
+  if (eventHandler && !state.interactedObjects.has(key)) {
+    eventHandler(room, obj);
+    return;
+  }
+  interactObject(room, obj);
+}
+
 function renderRoom() {
   const room = ROOMS[state.roomIndex];
 
   roomBg.setAttribute("data-label", room.name);
   roomNameEl.textContent = room.name;
-  roomIndicatorEl.textContent = `${state.roomIndex + 1} / ${ROOMS.length}`;
   roomArrowLeft.classList.toggle("disabled", state.roomIndex === 0);
   roomArrowRight.classList.toggle("disabled", state.roomIndex === ROOMS.length - 1);
 
@@ -265,7 +457,7 @@ function renderRoom() {
     btn.style.left = `${obj.x}%`;
     btn.style.top = `${obj.y}%`;
     btn.innerHTML = `<span class="room-object-placeholder">${obj.name}</span>`;
-    btn.addEventListener("click", () => interactObject(room, obj));
+    btn.addEventListener("click", () => handleObjectClick(room, obj));
     roomObjectsEl.appendChild(btn);
   });
 }
@@ -355,6 +547,8 @@ function enterQuizPhase() {
   roomStage.classList.add("hidden");
   notebookBtn.classList.add("hidden");
   closeNotebook();
+  windowEventOverlay.classList.remove("visible");
+  valveEventOverlay.classList.remove("visible");
   hideMessage();
 
   const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
@@ -433,7 +627,7 @@ function startGame() {
   state.countdown = COUNTDOWN_SECONDS;
   state.timeRemaining = TIME_LIMIT;
   state.score = 0;
-  state.roomIndex = 0;
+  state.roomIndex = STARTING_ROOM_INDEX;
   state.interactedObjects = new Set();
   state.notebookEntries = [];
 
@@ -442,6 +636,8 @@ function startGame() {
   accusationOverlay.classList.add("hidden");
   quizOverlay.classList.add("hidden");
   closeNotebook();
+  windowEventOverlay.classList.remove("visible");
+  valveEventOverlay.classList.remove("visible");
   updateNotebookBadge();
   hideMessage();
   testControls.classList.remove("hidden");
@@ -513,6 +709,8 @@ function endGame() {
   roomStage.classList.add("hidden");
   notebookBtn.classList.add("hidden");
   closeNotebook();
+  windowEventOverlay.classList.remove("visible");
+  valveEventOverlay.classList.remove("visible");
   hideMessage();
 
   const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
