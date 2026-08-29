@@ -4,7 +4,7 @@ const Input = {
 
 (function setupTouchDrag() {
   const surface = document.getElementById("game-container");
-  const maxRadius = 40;
+  const maxRadius = 60;
 
   let activeTouchId = null;
   let originX = 0;
