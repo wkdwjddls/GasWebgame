@@ -28,6 +28,21 @@
     <p id="message-text"></p>
   </div>
 
+  <button id="notebook-btn" class="hidden" type="button" aria-label="사건 수첩 열기">
+    <span class="notebook-icon">🗒️</span>
+    <span id="notebook-badge" class="notebook-badge hidden">0</span>
+  </button>
+
+  <div id="notebook-overlay">
+    <div id="notebook-panel">
+      <div class="notebook-panel-header">
+        <span class="badge">사건 수첩</span>
+        <button id="notebook-close-btn" type="button" aria-label="수첩 닫기">✕</button>
+      </div>
+      <div id="notebook-entries"></div>
+    </div>
+  </div>
+
   <div id="timer-bar-wrap" class="hidden">
     <div id="timer-bar-track">
       <div id="timer-bar-fill"></div>
@@ -87,7 +102,9 @@
         <span id="quiz-choice-right-text"></span>
       </button>
     </div>
-    <p id="quiz-feedback" class="quiz-feedback"></p>
+    <div id="quiz-feedback" class="quiz-feedback">
+      <p id="quiz-feedback-text"></p>
+    </div>
   </div>
 
   <div id="accusation-overlay" class="hidden">

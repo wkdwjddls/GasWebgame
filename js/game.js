@@ -9,6 +9,11 @@ const roomArrowLeft = document.getElementById("room-arrow-left");
 const roomArrowRight = document.getElementById("room-arrow-right");
 const messageBubble = document.getElementById("message-bubble");
 const messageTextEl = document.getElementById("message-text");
+const notebookBtn = document.getElementById("notebook-btn");
+const notebookBadge = document.getElementById("notebook-badge");
+const notebookOverlay = document.getElementById("notebook-overlay");
+const notebookCloseBtn = document.getElementById("notebook-close-btn");
+const notebookEntriesEl = document.getElementById("notebook-entries");
 
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
@@ -33,6 +38,7 @@ const quizChoiceRight = document.getElementById("quiz-choice-right");
 const quizChoiceLeftText = document.getElementById("quiz-choice-left-text");
 const quizChoiceRightText = document.getElementById("quiz-choice-right-text");
 const quizFeedbackEl = document.getElementById("quiz-feedback");
+const quizFeedbackTextEl = document.getElementById("quiz-feedback-text");
 
 const TIME_LIMIT = 180; // 3분
 const COUNTDOWN_SECONDS = 3;
@@ -135,6 +141,7 @@ const state = {
   roomIndex: 0,
   interactedObjects: new Set(),
   currentQuiz: null,
+  notebookEntries: [],
 };
 
 let messageHideTimer = null;
@@ -153,6 +160,76 @@ function hideMessage() {
   messageBubble.classList.remove("visible");
 }
 
+function updateNotebookBadge() {
+  const count = state.notebookEntries.length;
+  notebookBadge.textContent = count;
+  notebookBadge.classList.toggle("hidden", count === 0);
+}
+
+function renderNotebookEntries() {
+  notebookEntriesEl.innerHTML = "";
+
+  if (state.notebookEntries.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "notebook-empty";
+    empty.textContent = "아직 발견한 단서가 없어요. 방을 조사해 단서를 모아보세요!";
+    notebookEntriesEl.appendChild(empty);
+    return;
+  }
+
+  state.notebookEntries.forEach((entry) => {
+    const item = document.createElement("div");
+    item.className = "notebook-entry";
+    item.innerHTML = `
+      <span class="notebook-entry-location">${entry.roomName} · ${entry.objectName}</span>
+      <p class="notebook-entry-text">${entry.message}</p>
+    `;
+    notebookEntriesEl.appendChild(item);
+  });
+}
+
+function openNotebook() {
+  renderNotebookEntries();
+  notebookOverlay.classList.add("visible");
+}
+
+function closeNotebook() {
+  notebookOverlay.classList.remove("visible");
+}
+
+notebookBtn.addEventListener("click", openNotebook);
+notebookCloseBtn.addEventListener("click", closeNotebook);
+notebookOverlay.addEventListener("click", (e) => {
+  if (e.target === notebookOverlay) closeNotebook();
+});
+
+function flyToNotebook(originEl) {
+  const originRect = originEl.getBoundingClientRect();
+  const targetRect = notebookBtn.getBoundingClientRect();
+  const size = 28;
+
+  const chip = document.createElement("div");
+  chip.className = "clue-fly-chip";
+  chip.textContent = "🗒️";
+  chip.style.left = `${originRect.left + originRect.width / 2 - size / 2}px`;
+  chip.style.top = `${originRect.top + originRect.height / 2 - size / 2}px`;
+  document.body.appendChild(chip);
+
+  const dx = targetRect.left + targetRect.width / 2 - (originRect.left + originRect.width / 2);
+  const dy = targetRect.top + targetRect.height / 2 - (originRect.top + originRect.height / 2);
+
+  requestAnimationFrame(() => {
+    chip.style.transform = `translate(${dx}px, ${dy}px) scale(0.25)`;
+    chip.style.opacity = "0.15";
+  });
+
+  setTimeout(() => {
+    chip.remove();
+    notebookBtn.classList.add("pulse");
+    setTimeout(() => notebookBtn.classList.remove("pulse"), 350);
+  }, 650);
+}
+
 function interactObject(room, obj) {
   if (state.phase !== "playing") return;
 
@@ -162,7 +239,10 @@ function interactObject(room, obj) {
   if (!state.interactedObjects.has(key)) {
     state.interactedObjects.add(key);
     addScore(obj.points);
+    state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+    updateNotebookBadge();
     renderRoom();
+    setTimeout(() => flyToNotebook(messageBubble), 300);
   }
 }
 
@@ -190,17 +270,35 @@ function renderRoom() {
   });
 }
 
+let roomTransitionLock = false;
+
 function goToRoom(delta) {
+  if (roomTransitionLock) return;
   const next = state.roomIndex + delta;
   if (next < 0 || next >= ROOMS.length) return;
 
+  roomTransitionLock = true;
   hideMessage();
-  roomView.classList.add("fade");
+
+  const exitX = delta > 0 ? "-100%" : "100%";
+  const entryX = delta > 0 ? "100%" : "-100%";
+
+  roomView.style.transform = `translateX(${exitX})`;
+
   setTimeout(() => {
     state.roomIndex = next;
     renderRoom();
-    roomView.classList.remove("fade");
-  }, 160);
+
+    roomView.classList.add("no-transition");
+    roomView.style.transform = `translateX(${entryX})`;
+    void roomView.offsetWidth; // force reflow so the jump isn't animated
+    roomView.classList.remove("no-transition");
+    roomView.style.transform = "translateX(0)";
+
+    setTimeout(() => {
+      roomTransitionLock = false;
+    }, 250);
+  }, 250);
 }
 
 roomArrowLeft.addEventListener("click", () => goToRoom(-1));
@@ -255,6 +353,8 @@ function enterQuizPhase() {
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
   roomStage.classList.add("hidden");
+  notebookBtn.classList.add("hidden");
+  closeNotebook();
   hideMessage();
 
   const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
@@ -265,8 +365,8 @@ function enterQuizPhase() {
   quizChoiceRightText.textContent = quiz.options[1].text;
   quizChoiceLeft.classList.remove("correct", "wrong", "disabled");
   quizChoiceRight.classList.remove("correct", "wrong", "disabled");
-  quizFeedbackEl.classList.remove("visible");
-  quizFeedbackEl.textContent = "";
+  quizFeedbackEl.classList.remove("visible", "correct", "wrong");
+  quizFeedbackTextEl.textContent = "";
 
   quizOverlay.classList.remove("hidden");
 }
@@ -287,16 +387,18 @@ function resolveQuiz(choiceIndex) {
   if (chosen.correct) {
     state.score += QUIZ_BONUS;
     scoreEl.textContent = `점수: ${state.score}`;
-    quizFeedbackEl.textContent = `정답입니다! +${QUIZ_BONUS}점  ${quiz.explanation}`;
+    quizFeedbackTextEl.textContent = `정답입니다! ${quiz.explanation}`;
+    quizFeedbackEl.classList.add("correct");
   } else {
-    quizFeedbackEl.textContent = `아쉽지만 오답이에요.  ${quiz.explanation}`;
+    quizFeedbackTextEl.textContent = `아쉽지만 오답이에요. ${quiz.explanation}`;
+    quizFeedbackEl.classList.add("wrong");
   }
   quizFeedbackEl.classList.add("visible");
 
   setTimeout(() => {
     quizOverlay.classList.add("hidden");
     enterAccusationPhase();
-  }, 2200);
+  }, 2800);
 }
 
 quizChoiceLeft.addEventListener("click", () => resolveQuiz(0));
@@ -327,23 +429,26 @@ function resolveAccusation(suspectId) {
 
 function startGame() {
   state.started = true;
-  state.phase = "countdown";
+  state.phase = "playing"; // TODO: 카운트다운 임시 비활성화. 복구하려면 "countdown"으로 되돌리고 countdownOverlay를 보여주면 됨
   state.countdown = COUNTDOWN_SECONDS;
   state.timeRemaining = TIME_LIMIT;
   state.score = 0;
   state.roomIndex = 0;
   state.interactedObjects = new Set();
+  state.notebookEntries = [];
 
   endScreen.classList.add("hidden");
   timeBonusRow.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
   quizOverlay.classList.add("hidden");
-  roomStage.classList.add("hidden");
+  closeNotebook();
+  updateNotebookBadge();
   hideMessage();
   testControls.classList.remove("hidden");
   timerBarWrap.classList.remove("hidden");
-  countdownOverlay.classList.remove("hidden");
-  countdownNumber.textContent = COUNTDOWN_SECONDS;
+  countdownOverlay.classList.add("hidden");
+  roomStage.classList.remove("hidden");
+  notebookBtn.classList.remove("hidden");
   updateTimerDisplay();
   renderRoom();
   scoreEl.textContent = `점수: ${state.score}`;
@@ -406,6 +511,8 @@ function endGame() {
   accusationOverlay.classList.add("hidden");
   quizOverlay.classList.add("hidden");
   roomStage.classList.add("hidden");
+  notebookBtn.classList.add("hidden");
+  closeNotebook();
   hideMessage();
 
   const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
@@ -444,6 +551,7 @@ function update(dt) {
       state.phase = "playing";
       countdownOverlay.classList.add("hidden");
       roomStage.classList.remove("hidden");
+      notebookBtn.classList.remove("hidden");
     } else {
       countdownNumber.textContent = Math.ceil(state.countdown);
     }
