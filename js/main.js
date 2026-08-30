@@ -11,7 +11,7 @@ function loop(timestamp) {
 
 const cutsceneOverlay = document.getElementById("incident-cutscene");
 const cutsceneLines = Array.from(document.querySelectorAll(".cutscene-line"));
-const cutsceneNextBtn = document.getElementById("cutscene-next-btn");
+const cutsceneHint = document.getElementById("cutscene-hint");
 let cutsceneRevealIndex = 0;
 
 function revealNextCutsceneLine() {
@@ -20,13 +20,17 @@ function revealNextCutsceneLine() {
     cutsceneRevealIndex++;
   }
   if (cutsceneRevealIndex >= cutsceneLines.length) {
-    cutsceneNextBtn.classList.add("revealed");
+    cutsceneHint.classList.add("revealed");
   }
 }
 
-cutsceneOverlay.addEventListener("click", (e) => {
-  if (e.target.closest("#cutscene-next-btn")) return;
-  revealNextCutsceneLine();
+cutsceneOverlay.addEventListener("click", () => {
+  if (cutsceneRevealIndex < cutsceneLines.length) {
+    revealNextCutsceneLine();
+    return;
+  }
+  cutsceneOverlay.classList.add("hidden");
+  showSuspectIntro();
 });
 
 document.getElementById("start-btn").addEventListener("click", () => {
@@ -34,17 +38,12 @@ document.getElementById("start-btn").addEventListener("click", () => {
 
   cutsceneRevealIndex = 0;
   cutsceneLines.forEach((line) => line.classList.remove("revealed"));
-  cutsceneNextBtn.classList.remove("revealed");
+  cutsceneHint.classList.remove("revealed");
   cutsceneOverlay.classList.remove("hidden");
   revealNextCutsceneLine();
 
   lastTime = performance.now();
   requestAnimationFrame(loop);
-});
-
-cutsceneNextBtn.addEventListener("click", () => {
-  cutsceneOverlay.classList.add("hidden");
-  showSuspectIntro();
 });
 
 document.getElementById("intro-start-btn").addEventListener("click", () => {

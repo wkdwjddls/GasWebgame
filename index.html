@@ -122,6 +122,54 @@
     <span id="alarm-progress-text">0 / 5</span>
   </div>
 
+  <div id="extinguisher-event-overlay">
+    <button id="extinguisher-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">소화기 사용법</span>
+    <h1 id="extinguisher-instruction">안전핀 고리를 당겨서 뽑아주세요!</h1>
+    <div id="extinguisher-stage">
+      <span id="extinguisher-fire">🔥</span>
+      <span id="extinguisher-press-hint" class="hidden">✋ 소화기를 꾹 눌러주세요</span>
+      <svg id="extinguisher-svg" viewBox="0 0 200 300" aria-hidden="true">
+        <g id="extinguisher-body-group">
+          <path d="M120 92 q38 8 30 56" class="ext-hose"></path>
+          <ellipse cx="148" cy="150" rx="9" ry="6" class="ext-nozzle"></ellipse>
+
+          <rect x="55" y="90" width="70" height="168" rx="18" class="ext-body"></rect>
+          <rect x="55" y="150" width="70" height="56" class="ext-label-band"></rect>
+          <text x="90" y="183" text-anchor="middle" class="ext-label-text">소화기</text>
+
+          <rect x="72" y="64" width="36" height="28" rx="6" class="ext-neck"></rect>
+          <path d="M60 64 h68" class="ext-handle-bar"></path>
+          <path d="M70 64 v-12 q0 -10 10 -10 h20 q10 0 10 10 v12" class="ext-handle-grip"></path>
+
+          <!-- 분사액 연출: 손잡이를 누르는 동안에만 노즐 끝에서 뿜어져 나옴 -->
+          <g id="extinguisher-spray" class="ext-spray">
+            <path d="M144 148 L118 52 L176 58 L152 148 Z" class="ext-spray-cone"></path>
+            <circle class="ext-spray-drop ext-spray-drop-1" cx="148" cy="150" r="4"></circle>
+            <circle class="ext-spray-drop ext-spray-drop-2" cx="148" cy="150" r="3"></circle>
+            <circle class="ext-spray-drop ext-spray-drop-3" cx="148" cy="150" r="5"></circle>
+            <circle class="ext-spray-drop ext-spray-drop-4" cx="148" cy="150" r="3.5"></circle>
+            <circle class="ext-spray-drop ext-spray-drop-5" cx="148" cy="150" r="2.5"></circle>
+          </g>
+        </g>
+
+        <!-- 소화기 몸통 전체를 감싸는 널널한 터치 영역: 몸통 위, 안전핀 아래에 두어
+             핀 자리를 제외한 어디를 눌러도 분사 동작이 시작되도록 함 -->
+        <rect id="extinguisher-press-hit" x="14" y="24" width="180" height="248" rx="26" class="ext-press-hit"></rect>
+
+        <!-- 안전핀 고리: 가장 위에 그려져 같은 자리를 눌러도 핀 드래그가 우선됨 -->
+        <g id="extinguisher-pin" class="extinguisher-pin">
+          <circle cx="90" cy="50" r="30" class="ext-pin-hit"></circle>
+          <line x1="90" y1="58" x2="90" y2="76" class="ext-pin-shaft"></line>
+          <circle cx="90" cy="50" r="11" class="ext-pin-ring"></circle>
+        </g>
+      </svg>
+    </div>
+    <div id="extinguisher-hold-track" class="hidden">
+      <div id="extinguisher-hold-fill"></div>
+    </div>
+  </div>
+
   <div id="timer-bar-wrap" class="hidden">
     <div id="timer-bar-track">
       <div id="timer-bar-fill"></div>
@@ -159,7 +207,7 @@
       <p class="cutscene-line">다행히 폭발로 이어지진 않았지만, 자칫하면 큰 사고로 번질 뻔한 아찔한 상황이었습니다.</p>
       <p class="cutscene-line">현장에는 세 명의 용의자가 있었습니다. 진술과 단서를 조사해 사고의 원인을 제공한 진범을 찾아주세요.</p>
     </div>
-    <button id="cutscene-next-btn">용의자 확인하기</button>
+    <span id="cutscene-hint" class="cutscene-hint">화면을 터치해 계속하기 👆</span>
   </div>
 
   <div id="suspect-intro-overlay" class="hidden">

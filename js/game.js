@@ -34,6 +34,17 @@ const alarmEventOverlay = document.getElementById("alarm-event-overlay");
 const alarmEventClose = document.getElementById("alarm-event-close");
 const alarmPlayfieldEl = document.getElementById("alarm-playfield");
 const alarmProgressText = document.getElementById("alarm-progress-text");
+const extinguisherEventOverlay = document.getElementById("extinguisher-event-overlay");
+const extinguisherEventClose = document.getElementById("extinguisher-event-close");
+const extinguisherInstructionEl = document.getElementById("extinguisher-instruction");
+const extinguisherSvgEl = document.getElementById("extinguisher-svg");
+const extinguisherPinEl = document.getElementById("extinguisher-pin");
+const extinguisherFireEl = document.getElementById("extinguisher-fire");
+const extinguisherPressHitEl = document.getElementById("extinguisher-press-hit");
+const extinguisherBodyGroupEl = document.getElementById("extinguisher-body-group");
+const extinguisherPressHintEl = document.getElementById("extinguisher-press-hint");
+const extinguisherHoldTrack = document.getElementById("extinguisher-hold-track");
+const extinguisherHoldFill = document.getElementById("extinguisher-hold-fill");
 
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
@@ -69,7 +80,9 @@ const WINDOW_TAP_TARGET = 10; // 창문을 여는 데 필요한 터치 횟수
 const VALVE_GRID_SIZE = 9; // 3x3
 const VALVE_OPEN_COUNT = 3; // 열려있는 밸브 개수
 const ALARM_ROUNDS = 5; // 울리는 경보기를 찾아야 하는 횟수
-const ALARM_TRAP_START_ROUND = 3; // 이 라운드부터 울리지 않는 함정 경보기 등장
+const ALARM_COUNTS = [1, 1, 2, 3, 4]; // 라운드별 전체 경보기 개수 (항상 1개만 울림, 나머지는 함정)
+const EXTINGUISHER_PIN_PULL_DISTANCE = 44; // 안전핀이 뽑힌 것으로 인정되는 드래그 거리(px)
+const EXTINGUISHER_HOLD_DURATION_MS = 1400; // 분사가 완료되는 데 필요한 누르고 있는 시간(ms)
 
 const SUSPECTS = [
   {
@@ -113,7 +126,7 @@ const ROOMS = [
     name: "거실",
     objects: [
       { id: "detector", name: "가스 경보기", x: 22, y: 22, type: "alarm", points: 100, message: "가스 경보기는 주기적으로 점검해야 해요." },
-      { id: "extinguisher", name: "소화기", x: 45, y: 82, points: 100, message: "소화기는 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
+      { id: "extinguisher", name: "소화기", x: 45, y: 82, type: "extinguisher", points: 100, message: "소화기는 안전핀을 뽑고 손잡이를 꾹 눌러야 분사돼요. 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
       { id: "door-out", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "outside" },
     ],
   },
@@ -472,28 +485,29 @@ valveEventClose.addEventListener("click", () => {
   valveEventOverlay.classList.remove("visible");
 });
 
+// 220x380 뷰박스 기준 좌표. 천장 0~70 / 벽 70~320 / 바닥 320~380
 const SPOT_DIFF_ITEMS = [
   {
     id: "label",
     isLabel: true,
-    x: 50,
-    y: 12,
+    x: 110,
+    y: 40,
     explanation: "이름부터 달라요! LNG(액화천연가스)와 LPG(액화석유가스)는 서로 다른 가스예요.",
   },
   {
     id: "cloud",
     icon: "💨",
-    x: 30,
-    lngY: 40,
-    lpgY: 78,
+    x: 52,
+    lngY: 52,
+    lpgY: 300,
     explanation: "LNG는 공기보다 가벼워 위로 떠오르고, LPG는 공기보다 무거워 아래로 가라앉아요.",
   },
   {
     id: "detector",
     icon: "🔔",
-    x: 70,
-    lngY: 40,
-    lpgY: 78,
+    x: 176,
+    lngY: 48,
+    lpgY: 302,
     explanation: "그래서 가스 경보기 위치도 달라요. LNG는 천장 쪽, LPG는 바닥 쪽에 설치해야 해요.",
   },
 ];
@@ -502,24 +516,60 @@ let spotDiffRoom = null;
 let spotDiffObj = null;
 let spotDiffFound = new Set();
 
-function renderSpotDiffPanel(panelEl, side) {
-  panelEl.innerHTML = "";
-  SPOT_DIFF_ITEMS.forEach((item) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "spotdiff-hotspot";
-    if (item.isLabel) btn.classList.add("spotdiff-hotspot-label");
-    btn.dataset.itemId = item.id;
+function renderSpotDiffHotspot(item, side) {
+  const y = item.isLabel ? item.y : side === "lng" ? item.lngY : item.lpgY;
 
-    const y = item.isLabel ? item.y : side === "lng" ? item.lngY : item.lpgY;
-    btn.style.top = `${y}%`;
-    btn.style.left = `${item.x}%`;
-    btn.textContent = item.isLabel ? (side === "lng" ? "LNG" : "LPG") : item.icon;
+  if (item.isLabel) {
+    const text = side === "lng" ? "LNG" : "LPG";
+    return `
+      <g class="spotdiff-hotspot" data-item-id="${item.id}" transform="translate(${item.x}, ${y})">
+        <circle r="34" class="sd-hit"></circle>
+        <circle r="36" class="sd-found-ring"></circle>
+        <rect x="-28" y="-16" width="56" height="32" rx="16" class="sd-chip"></rect>
+        <text text-anchor="middle" dy="6" class="sd-chip-text">${text}</text>
+        <circle class="sd-check-bg" cx="26" cy="-20" r="9"></circle>
+        <text class="sd-check-text" x="26" y="-16" text-anchor="middle">✓</text>
+      </g>`;
+  }
 
-    btn.addEventListener("click", () => handleSpotDiffTap(item.id));
-    panelEl.appendChild(btn);
-  });
+  return `
+    <g class="spotdiff-hotspot" data-item-id="${item.id}" transform="translate(${item.x}, ${y})">
+      <circle r="28" class="sd-hit"></circle>
+      <circle r="28" class="sd-found-ring"></circle>
+      <text text-anchor="middle" dy="8" class="sd-emoji">${item.icon}</text>
+      <circle class="sd-check-bg" cx="20" cy="-18" r="9"></circle>
+      <text class="sd-check-text" x="20" y="-14" text-anchor="middle">✓</text>
+    </g>`;
 }
+
+function renderSpotDiffPanel(panelEl, side) {
+  panelEl.innerHTML = `
+    <svg viewBox="0 0 220 380" class="spotdiff-scene-svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <rect x="0" y="0" width="220" height="380" rx="16" class="sd-card-bg"></rect>
+      <rect x="0" y="0" width="220" height="70" class="sd-ceiling"></rect>
+      <rect x="0" y="70" width="220" height="250" class="sd-wall"></rect>
+      <rect x="0" y="320" width="220" height="60" class="sd-floor"></rect>
+      <line x1="0" y1="341" x2="220" y2="341" class="sd-floor-line"></line>
+      <line x1="0" y1="361" x2="220" y2="361" class="sd-floor-line"></line>
+      <rect x="148" y="108" width="48" height="70" rx="4" class="sd-window-frame"></rect>
+      <rect x="153" y="113" width="38" height="60" class="sd-window-glass"></rect>
+      <line x1="172" y1="113" x2="172" y2="173" class="sd-window-cross"></line>
+      <line x1="153" y1="143" x2="191" y2="143" class="sd-window-cross"></line>
+      <line x1="110" y1="228" x2="110" y2="300" class="sd-pipe"></line>
+      <rect x="82" y="300" width="56" height="24" rx="4" class="sd-stove-body"></rect>
+      <text x="110" y="297" text-anchor="middle" class="sd-emoji sd-emoji-flame">🔥</text>
+      ${SPOT_DIFF_ITEMS.map((item) => renderSpotDiffHotspot(item, side)).join("")}
+    </svg>`;
+}
+
+function handleSpotDiffPanelClick(event) {
+  const hotspot = event.target.closest(".spotdiff-hotspot");
+  if (!hotspot) return;
+  handleSpotDiffTap(hotspot.dataset.itemId);
+}
+
+spotdiffRoomLngEl.addEventListener("click", handleSpotDiffPanelClick);
+spotdiffRoomLpgEl.addEventListener("click", handleSpotDiffPanelClick);
 
 function openSpotDiffEvent(room, obj) {
   if (state.phase !== "playing") return;
@@ -547,7 +597,9 @@ function handleSpotDiffTap(itemId) {
   });
 
   const item = SPOT_DIFF_ITEMS.find((i) => i.id === itemId);
-  spotdiffFeedbackEl.textContent = `찾았어요! ${item.explanation}`;
+  spotdiffFeedbackEl.innerHTML = `<strong>찾았어요!</strong><br>${item.explanation}`;
+  spotdiffFeedbackEl.classList.remove("visible");
+  void spotdiffFeedbackEl.offsetWidth; // restart the grow-in animation on every find
   spotdiffFeedbackEl.classList.add("visible");
   spotdiffProgressText.textContent = `${spotDiffFound.size} / ${SPOT_DIFF_ITEMS.length}`;
 
@@ -586,38 +638,58 @@ function alarmDistance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function randomAlarmPosition(avoid) {
+function randomAlarmPosition(avoidList = []) {
   let pos;
   let attempts = 0;
   do {
     pos = { x: 15 + Math.random() * 70, y: 18 + Math.random() * 64 };
     attempts++;
-  } while (avoid && alarmDistance(pos, avoid) < 30 && attempts < 20);
+  } while (avoidList.some((p) => alarmDistance(pos, p) < 24) && attempts < 30);
   return pos;
+}
+
+function buildAlarmDeviceSvg() {
+  return `
+    <svg class="alarm-svg" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="8" y="6" width="48" height="52" rx="10" class="alarm-body"></rect>
+      <rect x="16" y="16" width="32" height="4" rx="2" class="alarm-grille"></rect>
+      <rect x="16" y="24" width="32" height="4" rx="2" class="alarm-grille"></rect>
+      <rect x="16" y="32" width="32" height="4" rx="2" class="alarm-grille"></rect>
+      <circle cx="32" cy="46" r="5" class="alarm-led"></circle>
+    </svg>
+  `;
 }
 
 function spawnAlarmRound() {
   alarmPlayfieldEl.innerHTML = "";
 
-  const ringingPos = randomAlarmPosition();
+  const roundNumber = alarmHits + 1;
+  const totalCount = ALARM_COUNTS[Math.min(roundNumber, ALARM_COUNTS.length) - 1];
+  const trapCount = totalCount - 1;
+  const takenPositions = [];
+
+  const ringingPos = randomAlarmPosition(takenPositions);
+  takenPositions.push(ringingPos);
+
   const ringingBtn = document.createElement("button");
   ringingBtn.type = "button";
   ringingBtn.className = "alarm-target ringing";
   ringingBtn.style.left = `${ringingPos.x}%`;
   ringingBtn.style.top = `${ringingPos.y}%`;
-  ringingBtn.textContent = "🔔";
+  ringingBtn.innerHTML = buildAlarmDeviceSvg();
   ringingBtn.addEventListener("click", handleAlarmHit);
   alarmPlayfieldEl.appendChild(ringingBtn);
 
-  const roundNumber = alarmHits + 1;
-  if (roundNumber >= ALARM_TRAP_START_ROUND) {
-    const trapPos = randomAlarmPosition(ringingPos);
+  for (let i = 0; i < trapCount; i++) {
+    const trapPos = randomAlarmPosition(takenPositions);
+    takenPositions.push(trapPos);
+
     const trapBtn = document.createElement("button");
     trapBtn.type = "button";
     trapBtn.className = "alarm-target trap";
     trapBtn.style.left = `${trapPos.x}%`;
     trapBtn.style.top = `${trapPos.y}%`;
-    trapBtn.textContent = "🔕";
+    trapBtn.innerHTML = buildAlarmDeviceSvg();
     trapBtn.addEventListener("click", handleAlarmTrapHit);
     alarmPlayfieldEl.appendChild(trapBtn);
   }
@@ -676,12 +748,165 @@ alarmEventClose.addEventListener("click", () => {
   alarmEventOverlay.classList.remove("visible");
 });
 
+let extinguisherRoom = null;
+let extinguisherObj = null;
+let extinguisherPinPulled = false;
+let extinguisherPinDrag = null; // { pointerId, startX, startY }
+let extinguisherHoldRaf = null;
+let extinguisherHoldStart = 0;
+let extinguisherCompleted = false;
+
+function getExtinguisherSvgScale() {
+  const rect = extinguisherSvgEl.getBoundingClientRect();
+  return { x: 200 / rect.width, y: 300 / rect.height };
+}
+
+function openExtinguisherEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  extinguisherRoom = room;
+  extinguisherObj = obj;
+  extinguisherPinPulled = false;
+  extinguisherCompleted = false;
+  extinguisherPinDrag = null;
+
+  extinguisherInstructionEl.textContent = "안전핀 고리를 당겨서 뽑아주세요!";
+  extinguisherPinEl.classList.remove("pulled", "shake", "dragging");
+  extinguisherPinEl.style.transform = "";
+  extinguisherFireEl.style.transform = "";
+  extinguisherFireEl.style.opacity = "1";
+  extinguisherBodyGroupEl.classList.remove("pressing");
+  extinguisherPressHintEl.classList.add("hidden");
+  extinguisherHoldTrack.classList.add("hidden");
+  extinguisherHoldFill.style.width = "0%";
+
+  extinguisherEventOverlay.classList.add("visible");
+}
+
+function pullExtinguisherPin() {
+  extinguisherPinPulled = true;
+  extinguisherPinEl.style.transform = "";
+  extinguisherPinEl.classList.add("pulled");
+
+  extinguisherInstructionEl.textContent = "소화기를 꾹 눌러서 불을 꺼주세요!";
+  extinguisherPressHintEl.classList.remove("hidden");
+  extinguisherHoldTrack.classList.remove("hidden");
+}
+
+extinguisherPinEl.addEventListener("pointerdown", (e) => {
+  if (extinguisherPinPulled) return;
+  e.preventDefault();
+  extinguisherPinEl.setPointerCapture(e.pointerId);
+  extinguisherPinEl.classList.add("dragging");
+  extinguisherPinDrag = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY };
+});
+
+extinguisherPinEl.addEventListener("pointermove", (e) => {
+  if (!extinguisherPinDrag || e.pointerId !== extinguisherPinDrag.pointerId) return;
+  const dx = e.clientX - extinguisherPinDrag.startX;
+  const dy = e.clientY - extinguisherPinDrag.startY;
+  const scale = getExtinguisherSvgScale();
+  extinguisherPinEl.style.transform = `translate(${dx * scale.x}px, ${dy * scale.y}px)`;
+});
+
+function endExtinguisherPinDrag(e) {
+  if (!extinguisherPinDrag || e.pointerId !== extinguisherPinDrag.pointerId) return;
+
+  const dx = e.clientX - extinguisherPinDrag.startX;
+  const dy = e.clientY - extinguisherPinDrag.startY;
+  const distance = Math.hypot(dx, dy);
+  extinguisherPinEl.classList.remove("dragging");
+  extinguisherPinDrag = null;
+
+  if (distance >= EXTINGUISHER_PIN_PULL_DISTANCE) {
+    pullExtinguisherPin();
+  } else {
+    extinguisherPinEl.style.transform = "";
+    extinguisherPinEl.classList.remove("shake");
+    void extinguisherPinEl.offsetWidth; // restart the shake animation on every failed pull
+    extinguisherPinEl.classList.add("shake");
+  }
+}
+
+extinguisherPinEl.addEventListener("pointerup", endExtinguisherPinDrag);
+extinguisherPinEl.addEventListener("pointercancel", endExtinguisherPinDrag);
+
+function stepExtinguisherHold(timestamp) {
+  const elapsed = timestamp - extinguisherHoldStart;
+  const progress = Math.min(1, elapsed / EXTINGUISHER_HOLD_DURATION_MS);
+
+  extinguisherHoldFill.style.width = `${progress * 100}%`;
+  extinguisherFireEl.style.transform = `scale(${1 - progress * 0.9})`;
+  extinguisherFireEl.style.opacity = `${1 - progress}`;
+
+  if (progress >= 1) {
+    extinguisherHoldRaf = null;
+    completeExtinguisherEvent();
+    return;
+  }
+  extinguisherHoldRaf = requestAnimationFrame(stepExtinguisherHold);
+}
+
+function cancelExtinguisherHold() {
+  if (extinguisherCompleted) return;
+
+  if (extinguisherHoldRaf) {
+    cancelAnimationFrame(extinguisherHoldRaf);
+    extinguisherHoldRaf = null;
+  }
+  extinguisherBodyGroupEl.classList.remove("pressing");
+  extinguisherHoldFill.style.width = "0%";
+  extinguisherFireEl.style.transform = "";
+  extinguisherFireEl.style.opacity = "1";
+}
+
+extinguisherPressHitEl.addEventListener("pointerdown", (e) => {
+  if (!extinguisherPinPulled || extinguisherCompleted) return;
+  extinguisherPressHitEl.setPointerCapture(e.pointerId);
+  extinguisherBodyGroupEl.classList.add("pressing");
+  extinguisherPressHintEl.classList.add("hidden");
+  extinguisherHoldStart = performance.now();
+  extinguisherHoldRaf = requestAnimationFrame(stepExtinguisherHold);
+});
+
+extinguisherPressHitEl.addEventListener("pointerup", cancelExtinguisherHold);
+extinguisherPressHitEl.addEventListener("pointercancel", cancelExtinguisherHold);
+extinguisherPressHitEl.addEventListener("pointerleave", cancelExtinguisherHold);
+
+function completeExtinguisherEvent() {
+  extinguisherCompleted = true;
+  extinguisherBodyGroupEl.classList.remove("pressing");
+  extinguisherInstructionEl.textContent = "불을 완전히 껐어요!";
+
+  const room = extinguisherRoom;
+  const obj = extinguisherObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    extinguisherEventOverlay.classList.remove("visible");
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 700);
+}
+
+extinguisherEventClose.addEventListener("click", () => {
+  cancelExtinguisherHold();
+  extinguisherEventOverlay.classList.remove("visible");
+});
+
 const OBJECT_EVENT_HANDLERS = {
   window: openWindowEvent,
   valve: openValveEvent,
   "spot-diff": openSpotDiffEvent,
   quiz: openBookQuizEvent,
   alarm: openAlarmEvent,
+  extinguisher: openExtinguisherEvent,
 };
 
 function handleObjectClick(room, obj) {
@@ -891,10 +1116,10 @@ function resolveBookQuiz(choiceIndex) {
 
   if (chosen.correct) {
     addScore(QUIZ_BONUS);
-    quizFeedbackTextEl.textContent = `정답입니다! ${quiz.explanation}`;
+    quizFeedbackTextEl.innerHTML = `<strong class="quiz-feedback-verdict">정답입니다!</strong><br>${quiz.explanation}`;
     quizFeedbackEl.classList.add("correct");
   } else {
-    quizFeedbackTextEl.textContent = `아쉽지만 오답이에요. ${quiz.explanation}`;
+    quizFeedbackTextEl.innerHTML = `<strong class="quiz-feedback-verdict">아쉽지만 오답이에요.</strong><br>${quiz.explanation}`;
     quizFeedbackEl.classList.add("wrong");
   }
   quizFeedbackEl.classList.add("visible");
@@ -980,13 +1205,44 @@ function startGame() {
   notebookBtn.classList.remove("hidden");
   updateTimerDisplay();
   renderRoom();
+  hudScoreDisplayed = 0;
   scoreEl.textContent = `점수: ${state.score}`;
+}
+
+let hudScoreDisplayed = 0;
+let hudScoreAnimId = null;
+
+function animateHudScore(target, duration = 1600) {
+  if (hudScoreAnimId) cancelAnimationFrame(hudScoreAnimId);
+
+  const start = hudScoreDisplayed;
+  const startTime = performance.now();
+
+  scoreEl.classList.remove("bump");
+  void scoreEl.offsetWidth; // restart the bump animation even if it's already mid-play
+  scoreEl.classList.add("bump");
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    hudScoreDisplayed = Math.round(start + (target - start) * eased);
+    scoreEl.textContent = `점수: ${hudScoreDisplayed}`;
+
+    if (progress < 1) {
+      hudScoreAnimId = requestAnimationFrame(tick);
+    } else {
+      hudScoreDisplayed = target;
+      scoreEl.textContent = `점수: ${target}`;
+      hudScoreAnimId = null;
+    }
+  }
+  hudScoreAnimId = requestAnimationFrame(tick);
 }
 
 function addScore(amount) {
   if (state.phase !== "playing") return;
   state.score += amount;
-  scoreEl.textContent = `점수: ${state.score}`;
+  animateHudScore(state.score);
 }
 
 function animateScoreCountUp(target, duration = 1200, onComplete) {
