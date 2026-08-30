@@ -57,7 +57,7 @@ document.getElementById("add-score-btn").addEventListener("click", () => {
 });
 
 document.getElementById("end-game-btn").addEventListener("click", () => {
-  enterQuizPhase();
+  enterAccusationPhase();
 });
 
 document.getElementById("restart-btn").addEventListener("click", () => {

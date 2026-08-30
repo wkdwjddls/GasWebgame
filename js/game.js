@@ -24,6 +24,16 @@ const valveEventOverlay = document.getElementById("valve-event-overlay");
 const valveEventClose = document.getElementById("valve-event-close");
 const valveGridEl = document.getElementById("valve-grid");
 const valveProgressText = document.getElementById("valve-progress-text");
+const spotdiffEventOverlay = document.getElementById("spotdiff-event-overlay");
+const spotdiffEventClose = document.getElementById("spotdiff-event-close");
+const spotdiffRoomLngEl = document.getElementById("spotdiff-room-lng");
+const spotdiffRoomLpgEl = document.getElementById("spotdiff-room-lpg");
+const spotdiffFeedbackEl = document.getElementById("spotdiff-feedback");
+const spotdiffProgressText = document.getElementById("spotdiff-progress-text");
+const alarmEventOverlay = document.getElementById("alarm-event-overlay");
+const alarmEventClose = document.getElementById("alarm-event-close");
+const alarmPlayfieldEl = document.getElementById("alarm-playfield");
+const alarmProgressText = document.getElementById("alarm-progress-text");
 
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
@@ -55,9 +65,11 @@ const COUNTDOWN_SECONDS = 3;
 const LOW_TIME_THRESHOLD = 30;
 const TIME_BONUS_PER_SECOND = 1; // 남은 시간 1초당 점수
 const QUIZ_BONUS = 100;
-const WINDOW_TAP_TARGET = 20; // 창문을 여는 데 필요한 터치 횟수
+const WINDOW_TAP_TARGET = 10; // 창문을 여는 데 필요한 터치 횟수
 const VALVE_GRID_SIZE = 9; // 3x3
 const VALVE_OPEN_COUNT = 3; // 열려있는 밸브 개수
+const ALARM_ROUNDS = 5; // 울리는 경보기를 찾아야 하는 횟수
+const ALARM_TRAP_START_ROUND = 3; // 이 라운드부터 울리지 않는 함정 경보기 등장
 
 const SUSPECTS = [
   {
@@ -92,7 +104,7 @@ const ROOMS = [
     name: "주방",
     objects: [
       { id: "stove", name: "가스레인지", x: 35, y: 72, points: 100, message: "가스레인지 사용 후에는 반드시 밸브를 잠가주세요!" },
-      { id: "valve", name: "가스 밸브", x: 40, y: 55, type: "valve", points: 100, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
+      { id: "valve", name: "가스 밸브", x: 40, y: 55, type: "valve", points: 200, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
       { id: "window", name: "창문", x: 82, y: 28, type: "window", message: "요리할 때는 창문을 열어 환기해주세요." },
     ],
   },
@@ -100,9 +112,9 @@ const ROOMS = [
     id: "living-room",
     name: "거실",
     objects: [
-      { id: "detector", name: "가스 경보기", x: 22, y: 22, points: 100, message: "가스 경보기는 주기적으로 점검해야 해요." },
-      { id: "outlet", name: "멀티탭", x: 72, y: 68, points: 100, message: "문어발식 콘센트 사용은 화재 위험이 있으니 피해주세요." },
+      { id: "detector", name: "가스 경보기", x: 22, y: 22, type: "alarm", points: 100, message: "가스 경보기는 주기적으로 점검해야 해요." },
       { id: "extinguisher", name: "소화기", x: 45, y: 82, points: 100, message: "소화기는 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
+      { id: "door-out", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "outside" },
     ],
   },
   {
@@ -112,7 +124,24 @@ const ROOMS = [
       { id: "hose", name: "가스 호스", x: 62, y: 78, points: 100, message: "낡거나 금이 간 가스 호스는 즉시 새 것으로 교체하세요." },
       { id: "vent", name: "환기구", x: 75, y: 35, points: 100, message: "환기구를 막지 않아야 가스가 안전하게 배출돼요." },
       { id: "pipe", name: "배관 연결부", x: 25, y: 72, points: 100, message: "배관 연결부에 비눗물을 발라 가스 누출 여부를 점검하세요." },
-      { id: "cylinder", name: "가스용기", x: 20, y: 25, points: 100, message: "가스용기는 직사광선을 피해 서늘한 곳에 세워서 보관하고, 넘어지지 않도록 고정해두세요." },
+    ],
+  },
+  {
+    id: "bedroom",
+    name: "침실",
+    objects: [
+      { id: "book", name: "책", x: 50, y: 50, type: "quiz", message: "책에서 배운 가스 안전 상식을 다시 떠올려보세요." },
+      { id: "tv", name: "TV", x: 25, y: 25, type: "quiz", message: "TV에서 본 가스 안전 상식을 다시 떠올려보세요." },
+      { id: "outlet", name: "멀티탭", x: 75, y: 75, points: 100, message: "문어발식 콘센트 사용은 화재 위험이 있으니 피해주세요." },
+    ],
+  },
+  {
+    id: "outside",
+    name: "바깥",
+    doorOnly: true, // 화살표/스와이프로는 드나들 수 없고 출입구 오브젝트로만 이동 가능
+    objects: [
+      { id: "cylinder", name: "가스용기", x: 22, y: 28, type: "spot-diff", points: 100, message: "LNG는 공기보다 가벼워 천장 쪽에, LPG는 공기보다 무거워 바닥 쪽에 머물러요. 그래서 감지기 위치도 서로 달라요!" },
+      { id: "door-in", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "living-room" },
     ],
   },
 ];
@@ -144,11 +173,27 @@ const QUIZZES = [
     ],
     explanation: "라이터 같은 불씨로 확인하면 폭발할 수 있어 매우 위험해요. 반드시 비눗물 거품으로 누출 여부를 확인하세요!",
   },
+  {
+    question: "가스레인지 사용 중 잠깐 자리를 비워야 한다면?",
+    options: [
+      { text: "불을 켠 채로 잠깐 비운다", correct: false },
+      { text: "반드시 불을 끄고 자리를 비운다", correct: true },
+    ],
+    explanation: "아주 잠깐이라도 불을 켠 채 자리를 비우면 위험해요. 자리를 비울 땐 반드시 불을 먼저 꺼주세요.",
+  },
+  {
+    question: "가스 배관 근처에 물건을 보관할 때 주의할 점은?",
+    options: [
+      { text: "물건을 배관에 밀착시켜 쌓아둔다", correct: false },
+      { text: "배관과 거리를 두고 눌리지 않게 보관한다", correct: true },
+    ],
+    explanation: "배관 주변에 물건을 쌓아두면 배관이 눌리거나 손상되어 가스가 샐 수 있어요. 배관과는 충분히 거리를 두고 보관하세요.",
+  },
 ];
 
 const state = {
   started: false,
-  phase: "idle", // idle | countdown | playing | quiz | accusation | ended
+  phase: "idle", // idle | countdown | playing | accusation | ended
   score: 0,
   countdown: COUNTDOWN_SECONDS,
   timeRemaining: TIME_LIMIT,
@@ -156,7 +201,6 @@ const state = {
   correctGuess: null,
   roomIndex: STARTING_ROOM_INDEX,
   interactedObjects: new Set(),
-  currentQuiz: null,
   notebookEntries: [],
 };
 
@@ -268,6 +312,7 @@ const WINDOW_FRAME_SIZE = 80; // window frame rect's full width in the SVG viewB
 let windowEventRoom = null;
 let windowEventObj = null;
 let windowEventTaps = 0;
+let windowTapProgress = {}; // 오브젝트 키별 진행 상황 (닫았다 다시 열어도 유지)
 
 function updateWindowPane() {
   const progress = Math.min(1, windowEventTaps / WINDOW_TAP_TARGET);
@@ -286,10 +331,11 @@ function openWindowEvent(room, obj) {
 
   windowEventRoom = room;
   windowEventObj = obj;
-  windowEventTaps = 0;
+  const key = `${room.id}:${obj.id}`;
+  windowEventTaps = windowTapProgress[key] || 0;
 
-  windowTapCountEl.textContent = `0 / ${WINDOW_TAP_TARGET}`;
-  windowProgressFill.style.width = "0%";
+  windowTapCountEl.textContent = `${windowEventTaps} / ${WINDOW_TAP_TARGET}`;
+  windowProgressFill.style.width = `${(windowEventTaps / WINDOW_TAP_TARGET) * 100}%`;
   updateWindowPane();
   windowEventOverlay.classList.add("visible");
 }
@@ -298,6 +344,7 @@ function handleWindowTap() {
   if (windowEventTaps >= WINDOW_TAP_TARGET) return;
 
   windowEventTaps++;
+  windowTapProgress[`${windowEventRoom.id}:${windowEventObj.id}`] = windowEventTaps;
   addScore(1);
 
   windowTapCountEl.textContent = `${windowEventTaps} / ${WINDOW_TAP_TARGET}`;
@@ -318,6 +365,7 @@ function completeWindowEvent() {
   const obj = windowEventObj;
   const key = `${room.id}:${obj.id}`;
 
+  delete windowTapProgress[key];
   state.interactedObjects.add(key);
   state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
   updateNotebookBadge();
@@ -424,12 +472,224 @@ valveEventClose.addEventListener("click", () => {
   valveEventOverlay.classList.remove("visible");
 });
 
+const SPOT_DIFF_ITEMS = [
+  {
+    id: "label",
+    isLabel: true,
+    x: 50,
+    y: 12,
+    explanation: "이름부터 달라요! LNG(액화천연가스)와 LPG(액화석유가스)는 서로 다른 가스예요.",
+  },
+  {
+    id: "cloud",
+    icon: "💨",
+    x: 30,
+    lngY: 40,
+    lpgY: 78,
+    explanation: "LNG는 공기보다 가벼워 위로 떠오르고, LPG는 공기보다 무거워 아래로 가라앉아요.",
+  },
+  {
+    id: "detector",
+    icon: "🔔",
+    x: 70,
+    lngY: 40,
+    lpgY: 78,
+    explanation: "그래서 가스 경보기 위치도 달라요. LNG는 천장 쪽, LPG는 바닥 쪽에 설치해야 해요.",
+  },
+];
+
+let spotDiffRoom = null;
+let spotDiffObj = null;
+let spotDiffFound = new Set();
+
+function renderSpotDiffPanel(panelEl, side) {
+  panelEl.innerHTML = "";
+  SPOT_DIFF_ITEMS.forEach((item) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "spotdiff-hotspot";
+    if (item.isLabel) btn.classList.add("spotdiff-hotspot-label");
+    btn.dataset.itemId = item.id;
+
+    const y = item.isLabel ? item.y : side === "lng" ? item.lngY : item.lpgY;
+    btn.style.top = `${y}%`;
+    btn.style.left = `${item.x}%`;
+    btn.textContent = item.isLabel ? (side === "lng" ? "LNG" : "LPG") : item.icon;
+
+    btn.addEventListener("click", () => handleSpotDiffTap(item.id));
+    panelEl.appendChild(btn);
+  });
+}
+
+function openSpotDiffEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  spotDiffRoom = room;
+  spotDiffObj = obj;
+  spotDiffFound = new Set();
+
+  spotdiffFeedbackEl.textContent = "";
+  spotdiffFeedbackEl.classList.remove("visible");
+  spotdiffProgressText.textContent = `0 / ${SPOT_DIFF_ITEMS.length}`;
+
+  renderSpotDiffPanel(spotdiffRoomLngEl, "lng");
+  renderSpotDiffPanel(spotdiffRoomLpgEl, "lpg");
+
+  spotdiffEventOverlay.classList.add("visible");
+}
+
+function handleSpotDiffTap(itemId) {
+  if (spotDiffFound.has(itemId)) return;
+
+  spotDiffFound.add(itemId);
+  document.querySelectorAll(`.spotdiff-hotspot[data-item-id="${itemId}"]`).forEach((el) => {
+    el.classList.add("found");
+  });
+
+  const item = SPOT_DIFF_ITEMS.find((i) => i.id === itemId);
+  spotdiffFeedbackEl.textContent = `찾았어요! ${item.explanation}`;
+  spotdiffFeedbackEl.classList.add("visible");
+  spotdiffProgressText.textContent = `${spotDiffFound.size} / ${SPOT_DIFF_ITEMS.length}`;
+
+  if (spotDiffFound.size >= SPOT_DIFF_ITEMS.length) {
+    completeSpotDiffEvent();
+  }
+}
+
+function completeSpotDiffEvent() {
+  const room = spotDiffRoom;
+  const obj = spotDiffObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    spotdiffEventOverlay.classList.remove("visible");
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 1200);
+}
+
+spotdiffEventClose.addEventListener("click", () => {
+  spotdiffEventOverlay.classList.remove("visible");
+});
+
+let alarmRoom = null;
+let alarmObj = null;
+let alarmHits = 0;
+
+function alarmDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function randomAlarmPosition(avoid) {
+  let pos;
+  let attempts = 0;
+  do {
+    pos = { x: 15 + Math.random() * 70, y: 18 + Math.random() * 64 };
+    attempts++;
+  } while (avoid && alarmDistance(pos, avoid) < 30 && attempts < 20);
+  return pos;
+}
+
+function spawnAlarmRound() {
+  alarmPlayfieldEl.innerHTML = "";
+
+  const ringingPos = randomAlarmPosition();
+  const ringingBtn = document.createElement("button");
+  ringingBtn.type = "button";
+  ringingBtn.className = "alarm-target ringing";
+  ringingBtn.style.left = `${ringingPos.x}%`;
+  ringingBtn.style.top = `${ringingPos.y}%`;
+  ringingBtn.textContent = "🔔";
+  ringingBtn.addEventListener("click", handleAlarmHit);
+  alarmPlayfieldEl.appendChild(ringingBtn);
+
+  const roundNumber = alarmHits + 1;
+  if (roundNumber >= ALARM_TRAP_START_ROUND) {
+    const trapPos = randomAlarmPosition(ringingPos);
+    const trapBtn = document.createElement("button");
+    trapBtn.type = "button";
+    trapBtn.className = "alarm-target trap";
+    trapBtn.style.left = `${trapPos.x}%`;
+    trapBtn.style.top = `${trapPos.y}%`;
+    trapBtn.textContent = "🔕";
+    trapBtn.addEventListener("click", handleAlarmTrapHit);
+    alarmPlayfieldEl.appendChild(trapBtn);
+  }
+
+  alarmProgressText.textContent = `${alarmHits} / ${ALARM_ROUNDS}`;
+}
+
+function openAlarmEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  alarmRoom = room;
+  alarmObj = obj;
+  alarmHits = 0;
+
+  spawnAlarmRound();
+  alarmEventOverlay.classList.add("visible");
+}
+
+function handleAlarmHit() {
+  alarmHits++;
+
+  if (alarmHits >= ALARM_ROUNDS) {
+    alarmPlayfieldEl.innerHTML = "";
+    alarmProgressText.textContent = `${alarmHits} / ${ALARM_ROUNDS}`;
+    completeAlarmEvent();
+    return;
+  }
+
+  spawnAlarmRound();
+}
+
+function handleAlarmTrapHit() {
+  // 함정을 누르면 진짜 경보기가 놀라서 자리를 옮김 - 진행도는 그대로
+  spawnAlarmRound();
+}
+
+function completeAlarmEvent() {
+  const room = alarmRoom;
+  const obj = alarmObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    alarmEventOverlay.classList.remove("visible");
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 500);
+}
+
+alarmEventClose.addEventListener("click", () => {
+  alarmEventOverlay.classList.remove("visible");
+});
+
 const OBJECT_EVENT_HANDLERS = {
   window: openWindowEvent,
   valve: openValveEvent,
+  "spot-diff": openSpotDiffEvent,
+  quiz: openBookQuizEvent,
+  alarm: openAlarmEvent,
 };
 
 function handleObjectClick(room, obj) {
+  if (obj.type === "door") {
+    goToRoomById(obj.targetRoomId);
+    return;
+  }
+
   const key = `${room.id}:${obj.id}`;
   const eventHandler = OBJECT_EVENT_HANDLERS[obj.type];
   if (eventHandler && !state.interactedObjects.has(key)) {
@@ -444,8 +704,11 @@ function renderRoom() {
 
   roomBg.setAttribute("data-label", room.name);
   roomNameEl.textContent = room.name;
-  roomArrowLeft.classList.toggle("disabled", state.roomIndex === 0);
-  roomArrowRight.classList.toggle("disabled", state.roomIndex === ROOMS.length - 1);
+
+  const prevRoom = ROOMS[state.roomIndex - 1];
+  const nextRoom = ROOMS[state.roomIndex + 1];
+  roomArrowLeft.classList.toggle("disabled", Boolean(room.doorOnly || state.roomIndex === 0 || (prevRoom && prevRoom.doorOnly)));
+  roomArrowRight.classList.toggle("disabled", Boolean(room.doorOnly || state.roomIndex === ROOMS.length - 1 || (nextRoom && nextRoom.doorOnly)));
 
   roomObjectsEl.innerHTML = "";
   room.objects.forEach((obj) => {
@@ -453,10 +716,12 @@ function renderRoom() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "room-object";
+    if (obj.type === "door") btn.classList.add("door");
     if (state.interactedObjects.has(key)) btn.classList.add("checked");
     btn.style.left = `${obj.x}%`;
     btn.style.top = `${obj.y}%`;
-    btn.innerHTML = `<span class="room-object-placeholder">${obj.name}</span>`;
+    const icon = obj.type === "door" ? "🚪 " : "";
+    btn.innerHTML = `<span class="room-object-placeholder">${icon}${obj.name}</span>`;
     btn.addEventListener("click", () => handleObjectClick(room, obj));
     roomObjectsEl.appendChild(btn);
   });
@@ -464,21 +729,20 @@ function renderRoom() {
 
 let roomTransitionLock = false;
 
-function goToRoom(delta) {
+function slideToRoomIndex(nextIndex, direction) {
   if (roomTransitionLock) return;
-  const next = state.roomIndex + delta;
-  if (next < 0 || next >= ROOMS.length) return;
+  if (nextIndex < 0 || nextIndex >= ROOMS.length || nextIndex === state.roomIndex) return;
 
   roomTransitionLock = true;
   hideMessage();
 
-  const exitX = delta > 0 ? "-100%" : "100%";
-  const entryX = delta > 0 ? "100%" : "-100%";
+  const exitX = direction > 0 ? "-100%" : "100%";
+  const entryX = direction > 0 ? "100%" : "-100%";
 
   roomView.style.transform = `translateX(${exitX})`;
 
   setTimeout(() => {
-    state.roomIndex = next;
+    state.roomIndex = nextIndex;
     renderRoom();
 
     roomView.classList.add("no-transition");
@@ -491,6 +755,46 @@ function goToRoom(delta) {
       roomTransitionLock = false;
     }, 250);
   }, 250);
+}
+
+function fadeToRoomIndex(nextIndex) {
+  if (roomTransitionLock) return;
+  if (nextIndex < 0 || nextIndex >= ROOMS.length || nextIndex === state.roomIndex) return;
+
+  roomTransitionLock = true;
+  hideMessage();
+
+  roomView.classList.add("door-fade-out");
+
+  setTimeout(() => {
+    state.roomIndex = nextIndex;
+    renderRoom();
+
+    roomView.classList.remove("door-fade-out");
+    roomView.classList.add("door-fade-in");
+
+    setTimeout(() => {
+      roomView.classList.remove("door-fade-in");
+      roomTransitionLock = false;
+    }, 300);
+  }, 300);
+}
+
+function goToRoom(delta) {
+  const currentRoom = ROOMS[state.roomIndex];
+  if (currentRoom.doorOnly) return; // 바깥은 화살표/스와이프로 나갈 수 없음
+
+  const nextIndex = state.roomIndex + delta;
+  const nextRoom = ROOMS[nextIndex];
+  if (nextRoom && nextRoom.doorOnly) return; // 바깥은 화살표/스와이프로 들어갈 수 없음
+
+  slideToRoomIndex(nextIndex, delta);
+}
+
+function goToRoomById(targetId) {
+  const targetIndex = ROOMS.findIndex((r) => r.id === targetId);
+  if (targetIndex === -1) return;
+  fadeToRoomIndex(targetIndex);
 }
 
 roomArrowLeft.addEventListener("click", () => goToRoom(-1));
@@ -538,25 +842,32 @@ function showSuspectIntro() {
   suspectIntroOverlay.classList.remove("hidden");
 }
 
-function enterQuizPhase() {
+let bookQuizRoom = null;
+let bookQuizObj = null;
+let bookQuizCurrent = null;
+let usedQuizIndices = new Set();
+
+function pickQuiz() {
+  const remaining = QUIZZES.map((_, i) => i).filter((i) => !usedQuizIndices.has(i));
+  const pool = remaining.length > 0 ? remaining : QUIZZES.map((_, i) => i);
+  const index = pool[Math.floor(Math.random() * pool.length)];
+
+  usedQuizIndices.add(index);
+  if (usedQuizIndices.size >= QUIZZES.length) usedQuizIndices.clear();
+
+  return QUIZZES[index];
+}
+
+function openBookQuizEvent(room, obj) {
   if (state.phase !== "playing") return;
-  state.phase = "quiz";
 
-  testControls.classList.add("hidden");
-  timerBarWrap.classList.add("hidden");
-  roomStage.classList.add("hidden");
-  notebookBtn.classList.add("hidden");
-  closeNotebook();
-  windowEventOverlay.classList.remove("visible");
-  valveEventOverlay.classList.remove("visible");
-  hideMessage();
+  bookQuizRoom = room;
+  bookQuizObj = obj;
+  bookQuizCurrent = pickQuiz();
 
-  const quiz = QUIZZES[Math.floor(Math.random() * QUIZZES.length)];
-  state.currentQuiz = quiz;
-
-  quizQuestionEl.textContent = quiz.question;
-  quizChoiceLeftText.textContent = quiz.options[0].text;
-  quizChoiceRightText.textContent = quiz.options[1].text;
+  quizQuestionEl.textContent = bookQuizCurrent.question;
+  quizChoiceLeftText.textContent = bookQuizCurrent.options[0].text;
+  quizChoiceRightText.textContent = bookQuizCurrent.options[1].text;
   quizChoiceLeft.classList.remove("correct", "wrong", "disabled");
   quizChoiceRight.classList.remove("correct", "wrong", "disabled");
   quizFeedbackEl.classList.remove("visible", "correct", "wrong");
@@ -565,10 +876,10 @@ function enterQuizPhase() {
   quizOverlay.classList.remove("hidden");
 }
 
-function resolveQuiz(choiceIndex) {
-  if (state.phase !== "quiz" || !state.currentQuiz) return;
+function resolveBookQuiz(choiceIndex) {
+  if (!bookQuizCurrent) return;
 
-  const quiz = state.currentQuiz;
+  const quiz = bookQuizCurrent;
   const chosen = quiz.options[choiceIndex];
   const choiceButtons = [quizChoiceLeft, quizChoiceRight];
 
@@ -579,8 +890,7 @@ function resolveQuiz(choiceIndex) {
   });
 
   if (chosen.correct) {
-    state.score += QUIZ_BONUS;
-    scoreEl.textContent = `점수: ${state.score}`;
+    addScore(QUIZ_BONUS);
     quizFeedbackTextEl.textContent = `정답입니다! ${quiz.explanation}`;
     quizFeedbackEl.classList.add("correct");
   } else {
@@ -589,18 +899,37 @@ function resolveQuiz(choiceIndex) {
   }
   quizFeedbackEl.classList.add("visible");
 
+  const room = bookQuizRoom;
+  const obj = bookQuizObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  renderRoom();
+
   setTimeout(() => {
     quizOverlay.classList.add("hidden");
-    enterAccusationPhase();
-  }, 2800);
+    showMessage(quiz.explanation);
+  }, 2000);
 }
 
-quizChoiceLeft.addEventListener("click", () => resolveQuiz(0));
-quizChoiceRight.addEventListener("click", () => resolveQuiz(1));
+quizChoiceLeft.addEventListener("click", () => resolveBookQuiz(0));
+quizChoiceRight.addEventListener("click", () => resolveBookQuiz(1));
 
 function enterAccusationPhase() {
-  if (state.phase !== "quiz") return;
+  if (state.phase !== "playing") return;
   state.phase = "accusation";
+
+  testControls.classList.add("hidden");
+  timerBarWrap.classList.add("hidden");
+  roomStage.classList.add("hidden");
+  notebookBtn.classList.add("hidden");
+  closeNotebook();
+  windowEventOverlay.classList.remove("visible");
+  valveEventOverlay.classList.remove("visible");
+  spotdiffEventOverlay.classList.remove("visible");
+  alarmEventOverlay.classList.remove("visible");
+  quizOverlay.classList.add("hidden");
+  hideMessage();
 
   accusationList.innerHTML = "";
   SUSPECTS.forEach((suspect, index) => {
@@ -630,6 +959,8 @@ function startGame() {
   state.roomIndex = STARTING_ROOM_INDEX;
   state.interactedObjects = new Set();
   state.notebookEntries = [];
+  windowTapProgress = {};
+  usedQuizIndices = new Set();
 
   endScreen.classList.add("hidden");
   timeBonusRow.classList.add("hidden");
@@ -638,6 +969,8 @@ function startGame() {
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
+  spotdiffEventOverlay.classList.remove("visible");
+  alarmEventOverlay.classList.remove("visible");
   updateNotebookBadge();
   hideMessage();
   testControls.classList.remove("hidden");
@@ -711,6 +1044,8 @@ function endGame() {
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
+  spotdiffEventOverlay.classList.remove("visible");
+  alarmEventOverlay.classList.remove("visible");
   hideMessage();
 
   const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
@@ -762,7 +1097,7 @@ function update(dt) {
   if (state.timeRemaining <= 0) {
     state.timeRemaining = 0;
     updateTimerDisplay();
-    enterQuizPhase();
+    enterAccusationPhase();
     return;
   }
   updateTimerDisplay();

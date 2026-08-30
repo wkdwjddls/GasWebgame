@@ -85,7 +85,7 @@
     <div id="window-progress-track">
       <div id="window-progress-fill"></div>
     </div>
-    <span id="window-tap-count">0 / 20</span>
+    <span id="window-tap-count">0 / 10</span>
   </div>
 
   <div id="valve-event-overlay">
@@ -94,6 +94,32 @@
     <h1>열려 있는 밸브 3개를 찾아 모두 잠가주세요!</h1>
     <div id="valve-grid"></div>
     <span id="valve-progress-text">열린 밸브 3개</span>
+  </div>
+
+  <div id="spotdiff-event-overlay">
+    <button id="spotdiff-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">LNG vs LPG</span>
+    <h1>두 그림에서 다른 점 3가지를 찾아 터치하세요!</h1>
+    <div id="spotdiff-panels">
+      <div class="spotdiff-panel">
+        <span class="spotdiff-panel-title">가정 A</span>
+        <div id="spotdiff-room-lng" class="spotdiff-room"></div>
+      </div>
+      <div class="spotdiff-panel">
+        <span class="spotdiff-panel-title">가정 B</span>
+        <div id="spotdiff-room-lpg" class="spotdiff-room"></div>
+      </div>
+    </div>
+    <p id="spotdiff-feedback"></p>
+    <span id="spotdiff-progress-text">0 / 3</span>
+  </div>
+
+  <div id="alarm-event-overlay">
+    <button id="alarm-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">가스 경보기 점검</span>
+    <h1>울리는 경보기를 빠르게 찾아 터치하세요!</h1>
+    <div id="alarm-playfield"></div>
+    <span id="alarm-progress-text">0 / 5</span>
   </div>
 
   <div id="timer-bar-wrap" class="hidden">
