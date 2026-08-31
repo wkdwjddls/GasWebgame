@@ -11,16 +11,15 @@ function loop(timestamp) {
 
 const cutsceneOverlay = document.getElementById("incident-cutscene");
 const cutsceneLines = Array.from(document.querySelectorAll(".cutscene-line"));
-const cutsceneHint = document.getElementById("cutscene-hint");
 let cutsceneRevealIndex = 0;
+
+const today = new Date();
+document.getElementById("cutscene-date").textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
 
 function revealNextCutsceneLine() {
   if (cutsceneRevealIndex < cutsceneLines.length) {
     cutsceneLines[cutsceneRevealIndex].classList.add("revealed");
     cutsceneRevealIndex++;
-  }
-  if (cutsceneRevealIndex >= cutsceneLines.length) {
-    cutsceneHint.classList.add("revealed");
   }
 }
 
@@ -30,7 +29,8 @@ cutsceneOverlay.addEventListener("click", () => {
     return;
   }
   cutsceneOverlay.classList.add("hidden");
-  showSuspectIntro();
+  assignCulprit();
+  startGame();
 });
 
 document.getElementById("start-btn").addEventListener("click", () => {
@@ -38,17 +38,11 @@ document.getElementById("start-btn").addEventListener("click", () => {
 
   cutsceneRevealIndex = 0;
   cutsceneLines.forEach((line) => line.classList.remove("revealed"));
-  cutsceneHint.classList.remove("revealed");
   cutsceneOverlay.classList.remove("hidden");
   revealNextCutsceneLine();
 
   lastTime = performance.now();
   requestAnimationFrame(loop);
-});
-
-document.getElementById("intro-start-btn").addEventListener("click", () => {
-  document.getElementById("suspect-intro-overlay").classList.add("hidden");
-  startGame();
 });
 
 document.getElementById("add-score-btn").addEventListener("click", () => {

@@ -171,6 +171,15 @@
     </div>
   </div>
 
+  <div id="pipe-event-overlay">
+    <button id="pipe-event-close" type="button" aria-label="닫기">✕</button>
+    <span class="badge">가스 배관 점검</span>
+    <h1>금이 간 배관 위로 아래의 새 배관을 끌어다 놓아 교체하세요!</h1>
+    <div id="pipe-row"></div>
+    <div id="pipe-supply-row"></div>
+    <span id="pipe-progress-text">0 / 2</span>
+  </div>
+
   <div id="timer-bar-wrap" class="hidden">
     <div id="timer-bar-track">
       <div id="timer-bar-fill"></div>
@@ -204,17 +213,10 @@
     <span class="badge badge-alert">사건 발생</span>
     <span class="cutscene-icon">🚨</span>
     <div class="cutscene-lines">
-      <p class="cutscene-line">오늘 새벽, 한 가정집에서 강한 가스 냄새가 난다는 신고가 접수되었습니다.</p>
-      <p class="cutscene-line">다행히 폭발로 이어지진 않았지만, 자칫하면 큰 사고로 번질 뻔한 아찔한 상황이었습니다.</p>
-      <p class="cutscene-line">현장에는 세 명의 용의자가 있었습니다. 진술과 단서를 조사해 사고의 원인을 제공한 진범을 찾아주세요.</p>
+      <p class="cutscene-line"><span id="cutscene-date"></span> OO주택 가스폭발을 예고한 범인</p>
+      <p class="cutscene-line">가스 폭발을 막고 범인을 찾기 위해선</p>
+      <p class="cutscene-line">가스탐정단의 도움이 필요합니다!</p>
     </div>
-    <span id="cutscene-hint" class="cutscene-hint">화면을 터치해 계속하기 👆</span>
-  </div>
-
-  <div id="suspect-intro-overlay" class="hidden">
-    <p class="subtitle">가스 사고 현장에서 발견된 용의자들입니다!</p>
-    <div id="suspect-intro-list" class="suspect-list"></div>
-    <button id="intro-start-btn">수사 시작!</button>
   </div>
 
   <div id="quiz-overlay">

@@ -46,6 +46,11 @@ const extinguisherBodyGroupEl = document.getElementById("extinguisher-body-group
 const extinguisherPressHintEl = document.getElementById("extinguisher-press-hint");
 const extinguisherHoldTrack = document.getElementById("extinguisher-hold-track");
 const extinguisherHoldFill = document.getElementById("extinguisher-hold-fill");
+const pipeEventOverlay = document.getElementById("pipe-event-overlay");
+const pipeEventClose = document.getElementById("pipe-event-close");
+const pipeRowEl = document.getElementById("pipe-row");
+const pipeSupplyRowEl = document.getElementById("pipe-supply-row");
+const pipeProgressText = document.getElementById("pipe-progress-text");
 
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
@@ -59,8 +64,6 @@ const endTitleEl = document.getElementById("end-title");
 const endMessageEl = document.getElementById("end-message");
 const timeBonusRow = document.getElementById("time-bonus-row");
 const timeBonusClockEl = document.getElementById("time-bonus-clock");
-const suspectIntroOverlay = document.getElementById("suspect-intro-overlay");
-const suspectIntroList = document.getElementById("suspect-intro-list");
 const accusationOverlay = document.getElementById("accusation-overlay");
 const accusationList = document.getElementById("accusation-list");
 const quizOverlay = document.getElementById("quiz-overlay");
@@ -84,6 +87,7 @@ const ALARM_ROUNDS = 5; // 울리는 경보기를 찾아야 하는 횟수
 const ALARM_COUNTS = [1, 1, 2, 3, 4]; // 라운드별 전체 경보기 개수 (항상 1개만 울림, 나머지는 함정)
 const EXTINGUISHER_PIN_PULL_DISTANCE = 44; // 안전핀이 뽑힌 것으로 인정되는 드래그 거리(px)
 const EXTINGUISHER_HOLD_DURATION_MS = 1400; // 분사가 완료되는 데 필요한 누르고 있는 시간(ms)
+const PIPE_CRACK_COUNT = 2; // 균열이 있는 배관 개수
 
 const SUSPECTS = [
   {
@@ -132,15 +136,6 @@ const ROOMS = [
     ],
   },
   {
-    id: "boiler-room",
-    name: "보일러실",
-    objects: [
-      { id: "hose", name: "가스 호스", x: 62, y: 78, points: 100, message: "낡거나 금이 간 가스 호스는 즉시 새 것으로 교체하세요." },
-      { id: "vent", name: "환기구", x: 75, y: 35, points: 100, message: "환기구를 막지 않아야 가스가 안전하게 배출돼요." },
-      { id: "pipe", name: "배관 연결부", x: 25, y: 72, points: 100, message: "배관 연결부에 비눗물을 발라 가스 누출 여부를 점검하세요." },
-    ],
-  },
-  {
     id: "bedroom",
     name: "침실",
     objects: [
@@ -155,6 +150,8 @@ const ROOMS = [
     doorOnly: true, // 화살표/스와이프로는 드나들 수 없고 출입구 오브젝트로만 이동 가능
     objects: [
       { id: "cylinder", name: "가스용기", x: 22, y: 28, type: "spot-diff", points: 100, message: "LNG는 공기보다 가벼워 천장 쪽에, LPG는 공기보다 무거워 바닥 쪽에 머물러요. 그래서 감지기 위치도 서로 달라요!" },
+      { id: "pipe", name: "가스 배관", x: 75, y: 58, type: "pipe", points: 100, message: "낡거나 금이 간 가스 배관은 즉시 새 것으로 교체하세요." },
+      { id: "meter", name: "가스계량기", x: 75, y: 32, points: 100, message: "가스계량기 주변은 항상 비워두고, 계량기와 밸브 상태를 주기적으로 점검하세요." },
       { id: "door-in", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "living-room" },
     ],
   },
@@ -901,6 +898,187 @@ extinguisherEventClose.addEventListener("click", () => {
   closeLensOverlay(extinguisherEventOverlay);
 });
 
+// 배관 5개가 Z자로 꺾인 경로를 이루도록 고정된 모양/회전/그리드 위치를 정의
+// (straight: 일자 배관, bent: 꺾이는 배관 - 서로 다른 모양이라 교체 시 같은 종류의 새 배관이 필요함)
+const PIPE_SHAPE_MAP = [
+  { type: "straight", rotate: 0, col: 1, row: 1 },
+  { type: "bent", rotate: 0, col: 2, row: 1 },
+  { type: "straight", rotate: 90, col: 2, row: 2 },
+  { type: "bent", rotate: 180, col: 2, row: 3 },
+  { type: "straight", rotate: 0, col: 3, row: 3 },
+];
+
+let pipeRoom = null;
+let pipeObj = null;
+let pipeFixedCount = 0;
+let pipeDrag = null; // { supplyEl, pointerId, startX, startY }
+
+function buildPipeCrackSvg() {
+  return `
+    <svg class="pipe-crack-svg" viewBox="0 0 30 34" aria-hidden="true">
+      <path d="M15 1 L9 15 L18 18 L7 33 L12 17 L4 15 L15 1 Z" class="pipe-crack-shape"></path>
+    </svg>
+  `;
+}
+
+function openPipeEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  pipeRoom = room;
+  pipeObj = obj;
+  pipeFixedCount = 0;
+  pipeDrag = null;
+
+  const indices = Array.from({ length: PIPE_SHAPE_MAP.length }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  const crackedSet = new Set(indices.slice(0, PIPE_CRACK_COUNT));
+
+  pipeRowEl.innerHTML = "";
+  PIPE_SHAPE_MAP.forEach((spec, i) => {
+    const segment = document.createElement("div");
+    segment.className = `pipe-segment ${spec.type}`;
+    segment.dataset.index = i;
+    segment.dataset.pieceType = spec.type;
+    segment.style.gridColumn = spec.col;
+    segment.style.gridRow = spec.row;
+    segment.style.setProperty("--pipe-rotate", `${spec.rotate}deg`);
+
+    const body = document.createElement("div");
+    body.className = "pipe-segment-body";
+    segment.appendChild(body);
+
+    if (crackedSet.has(i)) {
+      segment.classList.add("cracked");
+      segment.insertAdjacentHTML("beforeend", buildPipeCrackSvg());
+    }
+
+    pipeRowEl.appendChild(segment);
+  });
+
+  pipeSupplyRowEl.innerHTML = "";
+  crackedSet.forEach((i) => {
+    const spec = PIPE_SHAPE_MAP[i];
+    const supply = document.createElement("div");
+    supply.className = `pipe-supply ${spec.type}`;
+    supply.dataset.pieceType = spec.type;
+    const body = document.createElement("div");
+    body.className = "pipe-supply-body";
+    supply.appendChild(body);
+    pipeSupplyRowEl.appendChild(supply);
+    bindPipeSupplyDrag(supply);
+  });
+
+  pipeProgressText.textContent = `0 / ${PIPE_CRACK_COUNT}`;
+
+  openLensOverlay(pipeEventOverlay, obj);
+}
+
+function getPipeSegmentAt(x, y) {
+  const el = document.elementFromPoint(x, y);
+  return el ? el.closest(".pipe-segment") : null;
+}
+
+function updatePipeDropHighlight(x, y, supplyEl) {
+  pipeRowEl.querySelectorAll(".pipe-segment.drop-target-hover").forEach((p) => p.classList.remove("drop-target-hover"));
+  const segment = getPipeSegmentAt(x, y);
+  const isValidTarget =
+    segment &&
+    segment.classList.contains("cracked") &&
+    !segment.classList.contains("fixed") &&
+    segment.dataset.pieceType === supplyEl.dataset.pieceType;
+
+  if (isValidTarget) {
+    segment.classList.add("drop-target-hover");
+    // 교체될 배관의 회전값에 맞춰 드래그 중인 새 배관도 자연스럽게 회전
+    supplyEl.style.setProperty("--pipe-rotate", segment.style.getPropertyValue("--pipe-rotate") || "0deg");
+  } else {
+    supplyEl.style.setProperty("--pipe-rotate", "0deg");
+  }
+}
+
+function bindPipeSupplyDrag(supplyEl) {
+  supplyEl.addEventListener("pointerdown", (e) => {
+    if (supplyEl.classList.contains("used") || pipeDrag) return;
+    e.preventDefault();
+    supplyEl.setPointerCapture(e.pointerId);
+    supplyEl.style.transition = "none";
+    supplyEl.classList.add("dragging");
+    supplyEl.style.setProperty("--pipe-rotate", "0deg");
+    pipeDrag = { supplyEl, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY };
+  });
+
+  supplyEl.addEventListener("pointermove", (e) => {
+    if (!pipeDrag || pipeDrag.supplyEl !== supplyEl || e.pointerId !== pipeDrag.pointerId) return;
+    const dx = e.clientX - pipeDrag.startX;
+    const dy = e.clientY - pipeDrag.startY;
+    supplyEl.style.transform = `translate(${dx}px, ${dy}px)`;
+    updatePipeDropHighlight(e.clientX, e.clientY, supplyEl);
+  });
+
+  function endPipeDrag(e) {
+    if (!pipeDrag || pipeDrag.supplyEl !== supplyEl || e.pointerId !== pipeDrag.pointerId) return;
+    pipeDrag = null;
+    // dragging 클래스(및 pointer-events:none)를 떼기 전에 먼저 판정해야 드래그 중인 배관 자신이
+    // elementFromPoint를 가리지 않음
+    const segment = getPipeSegmentAt(e.clientX, e.clientY);
+    supplyEl.classList.remove("dragging");
+    pipeRowEl.querySelectorAll(".pipe-segment.drop-target-hover").forEach((p) => p.classList.remove("drop-target-hover"));
+
+    const isMatch =
+      segment &&
+      segment.classList.contains("cracked") &&
+      !segment.classList.contains("fixed") &&
+      segment.dataset.pieceType === supplyEl.dataset.pieceType;
+
+    if (isMatch) {
+      segment.classList.remove("cracked");
+      segment.classList.add("fixed");
+      const crackIcon = segment.querySelector(".pipe-crack-svg");
+      if (crackIcon) crackIcon.remove();
+      supplyEl.classList.add("used");
+      supplyEl.style.transform = "";
+
+      pipeFixedCount++;
+      pipeProgressText.textContent = `${pipeFixedCount} / ${PIPE_CRACK_COUNT}`;
+      if (pipeFixedCount >= PIPE_CRACK_COUNT) {
+        completePipeEvent();
+      }
+    } else {
+      supplyEl.style.transition = "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)";
+      supplyEl.style.transform = "";
+      supplyEl.style.setProperty("--pipe-rotate", "0deg");
+    }
+  }
+
+  supplyEl.addEventListener("pointerup", endPipeDrag);
+  supplyEl.addEventListener("pointercancel", endPipeDrag);
+}
+
+function completePipeEvent() {
+  const room = pipeRoom;
+  const obj = pipeObj;
+  const key = `${room.id}:${obj.id}`;
+
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  setTimeout(() => {
+    closeLensOverlay(pipeEventOverlay);
+    showMessage(obj.message);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }, 700);
+}
+
+pipeEventClose.addEventListener("click", () => {
+  closeLensOverlay(pipeEventOverlay);
+});
+
 const OBJECT_EVENT_HANDLERS = {
   window: openWindowEvent,
   valve: openValveEvent,
@@ -908,6 +1086,7 @@ const OBJECT_EVENT_HANDLERS = {
   quiz: openBookQuizEvent,
   alarm: openAlarmEvent,
   extinguisher: openExtinguisherEvent,
+  pipe: openPipeEvent,
 };
 
 function handleObjectClick(room, obj) {
@@ -1117,20 +1296,14 @@ function renderSuspectCard(suspect, clickable, index) {
     <span class="suspect-alibi">${suspect.alibi}</span>
   `;
   if (clickable) {
-    el.addEventListener("click", () => resolveAccusation(suspect.id));
+    el.addEventListener("click", () => resolveAccusation(suspect.id, el));
   }
   return el;
 }
 
-function showSuspectIntro() {
+function assignCulprit() {
   state.culpritId = SUSPECTS[Math.floor(Math.random() * SUSPECTS.length)].id;
   state.correctGuess = null;
-
-  suspectIntroList.innerHTML = "";
-  SUSPECTS.forEach((suspect, index) => {
-    suspectIntroList.appendChild(renderSuspectCard(suspect, false, index));
-  });
-  suspectIntroOverlay.classList.remove("hidden");
 }
 
 let bookQuizRoom = null;
@@ -1219,6 +1392,7 @@ function enterAccusationPhase() {
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
+  pipeEventOverlay.classList.remove("visible");
   quizOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
   hideMessage();
@@ -1228,18 +1402,48 @@ function enterAccusationPhase() {
     accusationList.appendChild(renderSuspectCard(suspect, true, index));
   });
   accusationOverlay.classList.remove("hidden");
+  accusationResolving = false;
 }
 
-function resolveAccusation(suspectId) {
-  if (state.phase !== "accusation") return;
+let accusationResolving = false;
+
+function resolveAccusation(suspectId, cardEl) {
+  if (state.phase !== "accusation" || accusationResolving) return;
+  accusationResolving = true;
 
   state.correctGuess = suspectId === state.culpritId;
   if (state.correctGuess) {
     state.score += 50;
   }
 
-  accusationOverlay.classList.add("hidden");
-  endGame();
+  accusationOverlay.classList.add("choosing");
+  Array.from(accusationList.children).forEach((card) => {
+    if (card !== cardEl) card.classList.add("suspect-card-fade");
+  });
+
+  if (cardEl) {
+    const firstRect = cardEl.getBoundingClientRect();
+    cardEl.classList.add("chosen");
+    const lastRect = cardEl.getBoundingClientRect();
+
+    const scaleX = firstRect.width / lastRect.width;
+    const scaleY = firstRect.height / lastRect.height;
+    const translateX = firstRect.left + firstRect.width / 2 - (lastRect.left + lastRect.width / 2);
+    const translateY = firstRect.top + firstRect.height / 2 - (lastRect.top + lastRect.height / 2);
+
+    cardEl.style.transition = "none";
+    cardEl.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+    void cardEl.offsetWidth; // apply the inverted transform before enabling the transition
+    cardEl.style.transition = "";
+    cardEl.classList.add("chosen-animate");
+    cardEl.style.transform = "";
+  }
+
+  setTimeout(() => {
+    accusationOverlay.classList.add("hidden");
+    accusationOverlay.classList.remove("choosing");
+    endGame();
+  }, 950);
 }
 
 function startGame() {
@@ -1263,6 +1467,7 @@ function startGame() {
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
+  pipeEventOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
   updateNotebookBadge();
   hideMessage();
@@ -1371,6 +1576,7 @@ function endGame() {
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
+  pipeEventOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
   hideMessage();
 
