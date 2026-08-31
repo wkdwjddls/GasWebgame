@@ -15,6 +15,7 @@
     <div id="room-view">
       <div id="room-bg"></div>
       <div id="room-objects"></div>
+      <div id="player-icon">🔍</div>
     </div>
     <button id="room-arrow-left" class="room-arrow" type="button" aria-label="이전 방으로 이동">‹</button>
     <button id="room-arrow-right" class="room-arrow" type="button" aria-label="다음 방으로 이동">›</button>
@@ -144,7 +145,7 @@
 
           <!-- 분사액 연출: 손잡이를 누르는 동안에만 노즐 끝에서 뿜어져 나옴 -->
           <g id="extinguisher-spray" class="ext-spray">
-            <path d="M144 148 L118 52 L176 58 L152 148 Z" class="ext-spray-cone"></path>
+            <path d="M144 148 L149 227 L195 211 L152 148 Z" class="ext-spray-cone"></path>
             <circle class="ext-spray-drop ext-spray-drop-1" cx="148" cy="150" r="4"></circle>
             <circle class="ext-spray-drop ext-spray-drop-2" cx="148" cy="150" r="3"></circle>
             <circle class="ext-spray-drop ext-spray-drop-3" cx="148" cy="150" r="5"></circle>
@@ -178,7 +179,7 @@
   </div>
 
   <div id="hud">
-    <span id="score">점수: 0</span>
+    <span id="score">0</span>
   </div>
 
   <div id="test-controls" class="hidden">
@@ -216,7 +217,7 @@
     <button id="intro-start-btn">수사 시작!</button>
   </div>
 
-  <div id="quiz-overlay" class="hidden">
+  <div id="quiz-overlay">
     <div class="quiz-header">
       <span class="badge">안전 상식 퀴즈</span>
       <h1 id="quiz-question"></h1>

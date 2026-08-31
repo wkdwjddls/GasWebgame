@@ -6,6 +6,7 @@ const roomObjectsEl = document.getElementById("room-objects");
 const roomNameEl = document.getElementById("room-name");
 const roomArrowLeft = document.getElementById("room-arrow-left");
 const roomArrowRight = document.getElementById("room-arrow-right");
+const playerIconEl = document.getElementById("player-icon");
 const messageBubble = document.getElementById("message-bubble");
 const messageTextEl = document.getElementById("message-text");
 const notebookBtn = document.getElementById("notebook-btn");
@@ -350,7 +351,7 @@ function openWindowEvent(room, obj) {
   windowTapCountEl.textContent = `${windowEventTaps} / ${WINDOW_TAP_TARGET}`;
   windowProgressFill.style.width = `${(windowEventTaps / WINDOW_TAP_TARGET) * 100}%`;
   updateWindowPane();
-  windowEventOverlay.classList.add("visible");
+  openLensOverlay(windowEventOverlay, obj);
 }
 
 function handleWindowTap() {
@@ -385,7 +386,7 @@ function completeWindowEvent() {
   renderRoom();
 
   setTimeout(() => {
-    windowEventOverlay.classList.remove("visible");
+    closeLensOverlay(windowEventOverlay);
     showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }, 500);
@@ -393,7 +394,7 @@ function completeWindowEvent() {
 
 windowTapTarget.addEventListener("click", handleWindowTap);
 windowEventClose.addEventListener("click", () => {
-  windowEventOverlay.classList.remove("visible");
+  closeLensOverlay(windowEventOverlay);
 });
 
 let valveEventRoom = null;
@@ -434,7 +435,7 @@ function openValveEvent(room, obj) {
   }
 
   valveProgressText.textContent = `열린 밸브 ${valveOpenRemaining}개`;
-  valveEventOverlay.classList.add("visible");
+  openLensOverlay(valveEventOverlay, obj);
 }
 
 function handleValveTap(cell) {
@@ -475,14 +476,14 @@ function completeValveEvent() {
   renderRoom();
 
   setTimeout(() => {
-    valveEventOverlay.classList.remove("visible");
+    closeLensOverlay(valveEventOverlay);
     showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }, 500);
 }
 
 valveEventClose.addEventListener("click", () => {
-  valveEventOverlay.classList.remove("visible");
+  closeLensOverlay(valveEventOverlay);
 });
 
 // 220x380 뷰박스 기준 좌표. 천장 0~70 / 벽 70~320 / 바닥 320~380
@@ -585,7 +586,7 @@ function openSpotDiffEvent(room, obj) {
   renderSpotDiffPanel(spotdiffRoomLngEl, "lng");
   renderSpotDiffPanel(spotdiffRoomLpgEl, "lpg");
 
-  spotdiffEventOverlay.classList.add("visible");
+  openLensOverlay(spotdiffEventOverlay, obj);
 }
 
 function handleSpotDiffTap(itemId) {
@@ -620,14 +621,14 @@ function completeSpotDiffEvent() {
   renderRoom();
 
   setTimeout(() => {
-    spotdiffEventOverlay.classList.remove("visible");
+    closeLensOverlay(spotdiffEventOverlay);
     showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }, 1200);
 }
 
 spotdiffEventClose.addEventListener("click", () => {
-  spotdiffEventOverlay.classList.remove("visible");
+  closeLensOverlay(spotdiffEventOverlay);
 });
 
 let alarmRoom = null;
@@ -705,7 +706,7 @@ function openAlarmEvent(room, obj) {
   alarmHits = 0;
 
   spawnAlarmRound();
-  alarmEventOverlay.classList.add("visible");
+  openLensOverlay(alarmEventOverlay, obj);
 }
 
 function handleAlarmHit() {
@@ -738,14 +739,14 @@ function completeAlarmEvent() {
   renderRoom();
 
   setTimeout(() => {
-    alarmEventOverlay.classList.remove("visible");
+    closeLensOverlay(alarmEventOverlay);
     showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }, 500);
 }
 
 alarmEventClose.addEventListener("click", () => {
-  alarmEventOverlay.classList.remove("visible");
+  closeLensOverlay(alarmEventOverlay);
 });
 
 let extinguisherRoom = null;
@@ -780,7 +781,7 @@ function openExtinguisherEvent(room, obj) {
   extinguisherHoldTrack.classList.add("hidden");
   extinguisherHoldFill.style.width = "0%";
 
-  extinguisherEventOverlay.classList.add("visible");
+  openLensOverlay(extinguisherEventOverlay, obj);
 }
 
 function pullExtinguisherPin() {
@@ -889,7 +890,7 @@ function completeExtinguisherEvent() {
   renderRoom();
 
   setTimeout(() => {
-    extinguisherEventOverlay.classList.remove("visible");
+    closeLensOverlay(extinguisherEventOverlay);
     showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }, 700);
@@ -897,7 +898,7 @@ function completeExtinguisherEvent() {
 
 extinguisherEventClose.addEventListener("click", () => {
   cancelExtinguisherHold();
-  extinguisherEventOverlay.classList.remove("visible");
+  closeLensOverlay(extinguisherEventOverlay);
 });
 
 const OBJECT_EVENT_HANDLERS = {
@@ -922,6 +923,49 @@ function handleObjectClick(room, obj) {
     return;
   }
   interactObject(room, obj);
+}
+
+function movePlayerIcon(xPercent, yPercent) {
+  playerIconEl.classList.remove("zoom-out");
+  playerIconEl.style.left = `${xPercent}%`;
+  playerIconEl.style.top = `${yPercent}%`;
+  playerIconEl.classList.remove("hop");
+  void playerIconEl.offsetWidth; // restart the hop animation on every move
+  playerIconEl.classList.add("hop");
+}
+
+function hopPlayerIcon() {
+  playerIconEl.classList.remove("hop");
+  void playerIconEl.offsetWidth; // restart the hop animation on every landing
+  playerIconEl.classList.add("hop");
+}
+
+function resetPlayerIconPosition(instant) {
+  if (instant) playerIconEl.classList.add("no-anim");
+  playerIconEl.classList.remove("zoom-out", "hop");
+  playerIconEl.style.left = "50%";
+  playerIconEl.style.top = "86%";
+  if (instant) {
+    void playerIconEl.offsetWidth; // force the jump to apply before re-enabling the transition
+    playerIconEl.classList.remove("no-anim");
+  }
+}
+
+// 돋보기(플레이어 아이콘)가 오브젝트 위치에서 확대되며 이벤트 화면이 그 안에서 열리는 것처럼 연출
+function openLensOverlay(overlayEl, obj) {
+  playerIconEl.style.left = `${obj.x}%`;
+  playerIconEl.style.top = `${obj.y}%`;
+  playerIconEl.classList.remove("hop", "zoom-out");
+  void playerIconEl.offsetWidth; // restart the zoom-out animation on every open
+  playerIconEl.classList.add("zoom-out");
+
+  overlayEl.style.transformOrigin = `${obj.x}% ${obj.y}%`;
+  overlayEl.classList.add("visible");
+}
+
+function closeLensOverlay(overlayEl) {
+  overlayEl.classList.remove("visible");
+  playerIconEl.classList.remove("zoom-out");
 }
 
 function renderRoom() {
@@ -963,12 +1007,17 @@ function slideToRoomIndex(nextIndex, direction) {
 
   const exitX = direction > 0 ? "-100%" : "100%";
   const entryX = direction > 0 ? "100%" : "-100%";
+  const leanClass = direction > 0 ? "run-left" : "run-right";
 
   roomView.style.transform = `translateX(${exitX})`;
+  playerIconEl.classList.remove("hop", "run-left", "run-right");
+  void playerIconEl.offsetWidth; // restart the lean animation on every transition
+  playerIconEl.classList.add(leanClass);
 
   setTimeout(() => {
     state.roomIndex = nextIndex;
     renderRoom();
+    resetPlayerIconPosition(true);
 
     roomView.classList.add("no-transition");
     roomView.style.transform = `translateX(${entryX})`;
@@ -976,8 +1025,14 @@ function slideToRoomIndex(nextIndex, direction) {
     roomView.classList.remove("no-transition");
     roomView.style.transform = "translateX(0)";
 
+    playerIconEl.classList.remove("run-left", "run-right");
+    void playerIconEl.offsetWidth; // restart the lean animation for the entry leg too
+    playerIconEl.classList.add(leanClass);
+
     setTimeout(() => {
+      playerIconEl.classList.remove("run-left", "run-right");
       roomTransitionLock = false;
+      hopPlayerIcon();
     }, 250);
   }, 250);
 }
@@ -994,6 +1049,7 @@ function fadeToRoomIndex(nextIndex) {
   setTimeout(() => {
     state.roomIndex = nextIndex;
     renderRoom();
+    resetPlayerIconPosition(true);
 
     roomView.classList.remove("door-fade-out");
     roomView.classList.add("door-fade-in");
@@ -1001,6 +1057,7 @@ function fadeToRoomIndex(nextIndex) {
     setTimeout(() => {
       roomView.classList.remove("door-fade-in");
       roomTransitionLock = false;
+      hopPlayerIcon();
     }, 300);
   }, 300);
 }
@@ -1024,6 +1081,15 @@ function goToRoomById(targetId) {
 
 roomArrowLeft.addEventListener("click", () => goToRoom(-1));
 roomArrowRight.addEventListener("click", () => goToRoom(1));
+
+// 방 안 어디를 터치하든 돋보기(플레이어 아이콘)가 그 위치로 이동
+roomView.addEventListener("click", (e) => {
+  if (roomTransitionLock) return;
+  const rect = roomView.getBoundingClientRect();
+  const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+  const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+  movePlayerIcon(xPercent, yPercent);
+});
 
 function formatTime(seconds) {
   const total = Math.max(0, Math.ceil(seconds));
@@ -1098,7 +1164,7 @@ function openBookQuizEvent(room, obj) {
   quizFeedbackEl.classList.remove("visible", "correct", "wrong");
   quizFeedbackTextEl.textContent = "";
 
-  quizOverlay.classList.remove("hidden");
+  openLensOverlay(quizOverlay, obj);
 }
 
 function resolveBookQuiz(choiceIndex) {
@@ -1132,7 +1198,7 @@ function resolveBookQuiz(choiceIndex) {
   renderRoom();
 
   setTimeout(() => {
-    quizOverlay.classList.add("hidden");
+    closeLensOverlay(quizOverlay);
     showMessage(quiz.explanation);
   }, 2000);
 }
@@ -1153,7 +1219,8 @@ function enterAccusationPhase() {
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
-  quizOverlay.classList.add("hidden");
+  quizOverlay.classList.remove("visible");
+  playerIconEl.classList.remove("zoom-out");
   hideMessage();
 
   accusationList.innerHTML = "";
@@ -1190,12 +1257,13 @@ function startGame() {
   endScreen.classList.add("hidden");
   timeBonusRow.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
-  quizOverlay.classList.add("hidden");
+  quizOverlay.classList.remove("visible");
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
+  playerIconEl.classList.remove("zoom-out");
   updateNotebookBadge();
   hideMessage();
   testControls.classList.remove("hidden");
@@ -1205,8 +1273,9 @@ function startGame() {
   notebookBtn.classList.remove("hidden");
   updateTimerDisplay();
   renderRoom();
+  resetPlayerIconPosition(true);
   hudScoreDisplayed = 0;
-  scoreEl.textContent = `점수: ${state.score}`;
+  scoreEl.textContent = `${state.score}`;
 }
 
 let hudScoreDisplayed = 0;
@@ -1226,13 +1295,13 @@ function animateHudScore(target, duration = 1600) {
     const progress = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(1 - progress, 3);
     hudScoreDisplayed = Math.round(start + (target - start) * eased);
-    scoreEl.textContent = `점수: ${hudScoreDisplayed}`;
+    scoreEl.textContent = `${hudScoreDisplayed}`;
 
     if (progress < 1) {
       hudScoreAnimId = requestAnimationFrame(tick);
     } else {
       hudScoreDisplayed = target;
-      scoreEl.textContent = `점수: ${target}`;
+      scoreEl.textContent = `${target}`;
       hudScoreAnimId = null;
     }
   }
@@ -1294,7 +1363,7 @@ function endGame() {
   testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
-  quizOverlay.classList.add("hidden");
+  quizOverlay.classList.remove("visible");
   roomStage.classList.add("hidden");
   notebookBtn.classList.add("hidden");
   closeNotebook();
@@ -1302,6 +1371,7 @@ function endGame() {
   valveEventOverlay.classList.remove("visible");
   spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
+  playerIconEl.classList.remove("zoom-out");
   hideMessage();
 
   const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
