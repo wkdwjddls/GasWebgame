@@ -80,6 +80,58 @@ html, body {
   inset: 0;
   z-index: 1;
   overflow: hidden;
+  filter: blur(0);
+  transition: filter 0.9s ease;
+}
+
+#room-stage.intro-blur {
+  filter: blur(32px);
+}
+
+#room-stage.no-transition {
+  transition: none;
+}
+
+/* 추리 시작 인트로: 화면이 흐린 채로 문구가 한 글자씩 타이핑되고, 다 나오면 배경이 선명해짐 */
+#intro-line-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+#intro-line-overlay.visible {
+  opacity: 1;
+}
+
+#intro-line-text {
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 32px;
+  color: #ffd166;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75), 0 0 26px rgba(255, 183, 3, 0.45);
+  text-align: center;
+}
+
+#intro-line-cursor {
+  display: inline-block;
+  width: 4px;
+  height: 30px;
+  margin-left: 4px;
+  vertical-align: -5px;
+  background: #ffd166;
+  animation: intro-cursor-blink 0.8s steps(1) infinite;
+}
+
+@keyframes intro-cursor-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 #room-view {
@@ -355,12 +407,12 @@ html, body {
   left: 50%;
   bottom: 88px;
   z-index: 18;
-  width: calc(100% - 32px);
-  max-width: 460px;
-  padding: 20px 26px;
+  width: calc(100% - 24px);
+  max-width: 560px;
+  padding: 32px 34px;
   background: rgba(24, 36, 73, 0.96);
   border: 1px solid rgba(255, 183, 3, 0.5);
-  border-radius: 20px;
+  border-radius: 26px;
   color: #f4f6ff;
   text-align: center;
   opacity: 0;
@@ -373,9 +425,9 @@ html, body {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -10px;
+  bottom: -14px;
   transform: translateX(-50%);
-  border-width: 10px 10px 0 10px;
+  border-width: 14px 14px 0 14px;
   border-style: solid;
   border-color: rgba(24, 36, 73, 0.96) transparent transparent transparent;
 }
@@ -386,8 +438,71 @@ html, body {
 }
 
 #message-text {
-  font-size: 17px;
-  line-height: 1.65;
+  font-size: 23px;
+  line-height: 1.6;
+  font-weight: 600;
+}
+
+/* 범인 단서 공개 연출: 담당 오브젝트를 눌렀을 때 범인이면 크게 경고, 아니면 평범한 안내 */
+#clue-alert-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px;
+  background: radial-gradient(circle at 50% 42%, rgba(233, 79, 79, 0.35), rgba(6, 10, 24, 0.94) 68%);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+#clue-alert-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#clue-alert-title {
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 46px;
+  letter-spacing: 1px;
+  color: #ff5c5c;
+  text-shadow: 0 0 26px rgba(255, 92, 92, 0.85), 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+#clue-alert-overlay.visible #clue-alert-title {
+  animation: clue-alert-shake 0.5s ease;
+}
+
+#clue-alert-detail {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff4f4;
+  max-width: 340px;
+  line-height: 1.55;
+}
+
+@keyframes clue-alert-shake {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+  20% {
+    transform: translateX(-10px) scale(1.06);
+  }
+  40% {
+    transform: translateX(10px) scale(1.06);
+  }
+  60% {
+    transform: translateX(-6px) scale(1.02);
+  }
+  80% {
+    transform: translateX(6px) scale(1.02);
+  }
 }
 
 /* 사건 수첩 */
@@ -587,7 +702,8 @@ html, body {
 }
 
 #window-event-overlay h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 22px;
   line-height: 1.4;
   color: #ffd166;
@@ -761,7 +877,8 @@ html, body {
 }
 
 #valve-event-overlay h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 22px;
   line-height: 1.4;
   color: #ffd166;
@@ -914,7 +1031,8 @@ html, body {
 
 #spotdiff-event-overlay h1 {
   flex-shrink: 0;
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 17px;
   line-height: 1.4;
   color: #ffd166;
@@ -1184,7 +1302,8 @@ html, body {
 }
 
 #alarm-event-overlay h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 20px;
   line-height: 1.4;
   color: #ffd166;
@@ -1324,7 +1443,8 @@ html, body {
 }
 
 #extinguisher-event-overlay h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 20px;
   line-height: 1.4;
   color: #ffd166;
@@ -1661,7 +1781,8 @@ html, body {
 }
 
 #pipe-event-overlay h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 20px;
   line-height: 1.4;
   color: #ffd166;
@@ -1982,13 +2103,101 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 32px 24px;
+  gap: 14px;
+  padding: 32px 10px;
+  overflow-y: auto;
   background:
     radial-gradient(circle at 50% 0%, rgba(255, 183, 3, 0.12), transparent 55%),
     linear-gradient(180deg, #182449 0%, #0c1330 100%);
   color: #f4f6ff;
   text-align: center;
+  transition: background 0.4s ease;
+}
+
+#end-screen.result-success {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(123, 224, 156, 0.16), transparent 55%),
+    linear-gradient(180deg, #182449 0%, #0c1330 100%);
+}
+
+#end-screen.result-fail {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(233, 79, 79, 0.16), transparent 55%),
+    linear-gradient(180deg, #182449 0%, #0c1330 100%);
+}
+
+#end-screen.result-success #end-title {
+  color: #7be09c;
+  text-shadow: 0 2px 12px rgba(123, 224, 156, 0.4);
+}
+
+#end-screen.result-fail #end-title {
+  color: #ff8686;
+  text-shadow: 0 2px 12px rgba(233, 79, 79, 0.4);
+}
+
+@keyframes end-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  padding: 18px 14px 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+  border-radius: 20px;
+  animation: end-card-in 0.4s ease 0.1s backwards;
+}
+
+#culprit-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  animation: end-card-in 0.4s ease 0.18s backwards;
+}
+
+#culprit-icon {
+  font-size: 40px;
+  flex-shrink: 0;
+}
+
+#culprit-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+}
+
+.culprit-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffb703;
+}
+
+#culprit-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f4f6ff;
 }
 
 #incident-cutscene {
@@ -1999,8 +2208,8 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 32px 24px;
+  gap: 34px;
+  padding: 56px 10px;
   background:
     radial-gradient(circle at 50% 0%, rgba(233, 79, 79, 0.16), transparent 55%),
     linear-gradient(180deg, #241a3a 0%, #0c1330 100%);
@@ -2008,22 +2217,81 @@ html, body {
   text-align: center;
 }
 
-.badge-alert {
-  border-color: #e94f4f;
-  background: rgba(233, 79, 79, 0.15);
-  color: #ff8686;
+.cutscene-icon {
+  position: relative;
+  z-index: 1;
+  font-size: 96px;
+  filter: drop-shadow(0 4px 16px rgba(233, 79, 79, 0.5));
+  animation: cutscene-icon-alarm 0.6s ease-in-out infinite;
 }
 
-.cutscene-icon {
-  font-size: 64px;
-  filter: drop-shadow(0 4px 16px rgba(233, 79, 79, 0.5));
+@keyframes cutscene-icon-alarm {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 4px 16px rgba(233, 79, 79, 0.5));
+  }
+  25% {
+    transform: scale(1.16) rotate(-10deg);
+    filter: drop-shadow(0 4px 26px rgba(233, 79, 79, 0.95));
+  }
+  50% {
+    transform: scale(1.02) rotate(0deg);
+  }
+  75% {
+    transform: scale(1.16) rotate(10deg);
+    filter: drop-shadow(0 4px 26px rgba(233, 79, 79, 0.95));
+  }
+}
+
+/* 붉은 경광등이 번쩍이는 듯한 스트로브 효과 */
+.cutscene-strobe {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(circle at 50% 42%, rgba(233, 79, 79, 0.5), transparent 62%);
+  animation: cutscene-strobe-pulse 0.9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cutscene-strobe-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 위아래에서 흘러가는 경고 테이프 */
+.cutscene-stripe {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
+  height: 14px;
+  background: repeating-linear-gradient(-45deg, #ffb703 0 16px, #14141c 16px 32px);
+  box-shadow: 0 0 14px rgba(255, 183, 3, 0.55);
+  animation: cutscene-stripe-scroll 1s linear infinite;
+}
+
+@keyframes cutscene-stripe-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 45px 0;
+  }
 }
 
 .cutscene-lines {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-width: 420px;
+  gap: 24px;
+  max-width: 100%;
 }
 
 @keyframes cutscene-line-in {
@@ -2038,9 +2306,10 @@ html, body {
 }
 
 .cutscene-line {
-  font-size: 18px;
-  line-height: 1.7;
-  color: #c7cff0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #e7ebff;
   opacity: 0;
 }
 
@@ -2066,16 +2335,17 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 28px 10px 20px;
+  padding: 28px 4px 20px;
   text-align: center;
 }
 
 #quiz-question {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 24px;
   line-height: 1.4;
   color: #ffd166;
-  max-width: 420px;
+  max-width: 100%;
 }
 
 #quiz-choices {
@@ -2089,7 +2359,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 24px 10px;
   border: none;
   background: rgba(24, 36, 73, 0.5);
   color: #f4f6ff;
@@ -2345,7 +2615,8 @@ button.suspect-card:active {
 
 #start-screen h1,
 #end-screen h1 {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
+  font-weight: 700;
   font-size: 34px;
   letter-spacing: 2px;
   color: #ffd166;
@@ -2365,40 +2636,47 @@ button.suspect-card:active {
   text-shadow: 0 2px 12px rgba(255, 128, 0, 0.35);
 }
 
-#time-bonus-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 18px;
-  background: rgba(255, 183, 3, 0.12);
-  border: 1px solid rgba(255, 183, 3, 0.4);
-  border-radius: 999px;
-  color: #ffd166;
+#detective-title {
+  font-size: 16px;
+  padding: 8px 22px;
 }
 
-.time-bonus-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #c7cff0;
+@keyframes detective-title-levelup {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+    background: rgba(255, 183, 3, 0.4);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
-#time-bonus-clock {
-  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
-  font-size: 18px;
-  color: #ffd166;
-  min-width: 48px;
-  text-align: center;
+#detective-title.levelup {
+  animation: detective-title-levelup 0.45s ease;
 }
 
 .edu-message {
+  width: 100%;
   max-width: 480px;
   font-size: 16px;
   line-height: 1.7;
   color: #c7cff0;
+  white-space: pre-line;
   background: rgba(255, 183, 3, 0.1);
   border: 1px solid rgba(255, 183, 3, 0.35);
   border-radius: 14px;
-  padding: 14px 20px;
+  padding: 14px 12px;
+}
+
+#end-message {
+  animation: end-card-in 0.4s ease 0.26s backwards;
+}
+
+#end-screen #restart-btn {
+  animation: end-card-in 0.4s ease 0.34s backwards;
 }
 
 #start-btn,

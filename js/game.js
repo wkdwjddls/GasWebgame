@@ -7,8 +7,12 @@ const roomNameEl = document.getElementById("room-name");
 const roomArrowLeft = document.getElementById("room-arrow-left");
 const roomArrowRight = document.getElementById("room-arrow-right");
 const playerIconEl = document.getElementById("player-icon");
+const introLineOverlay = document.getElementById("intro-line-overlay");
+const introLineText = document.getElementById("intro-line-text");
 const messageBubble = document.getElementById("message-bubble");
 const messageTextEl = document.getElementById("message-text");
+const clueAlertOverlay = document.getElementById("clue-alert-overlay");
+const clueAlertDetail = document.getElementById("clue-alert-detail");
 const notebookBtn = document.getElementById("notebook-btn");
 const notebookBadge = document.getElementById("notebook-badge");
 const notebookOverlay = document.getElementById("notebook-overlay");
@@ -60,10 +64,12 @@ const countdownOverlay = document.getElementById("countdown-overlay");
 const countdownNumber = document.getElementById("countdown-number");
 const endScreen = document.getElementById("end-screen");
 const finalScoreEl = document.getElementById("final-score");
+const detectiveTitleEl = document.getElementById("detective-title");
 const endTitleEl = document.getElementById("end-title");
 const endMessageEl = document.getElementById("end-message");
-const timeBonusRow = document.getElementById("time-bonus-row");
-const timeBonusClockEl = document.getElementById("time-bonus-clock");
+const culpritCard = document.getElementById("culprit-card");
+const culpritIconEl = document.getElementById("culprit-icon");
+const culpritNameEl = document.getElementById("culprit-name");
 const accusationOverlay = document.getElementById("accusation-overlay");
 const accusationList = document.getElementById("accusation-list");
 const quizOverlay = document.getElementById("quiz-overlay");
@@ -79,7 +85,7 @@ const TIME_LIMIT = 180; // 3분
 const COUNTDOWN_SECONDS = 3;
 const LOW_TIME_THRESHOLD = 30;
 const TIME_BONUS_PER_SECOND = 1; // 남은 시간 1초당 점수
-const QUIZ_BONUS = 100;
+const QUIZ_BONUS = 300;
 const WINDOW_TAP_TARGET = 10; // 창문을 여는 데 필요한 터치 횟수
 const VALVE_GRID_SIZE = 9; // 3x3
 const VALVE_OPEN_COUNT = 3; // 열려있는 밸브 개수
@@ -95,24 +101,24 @@ const SUSPECTS = [
     name: "용의자 A",
     role: "요리사",
     icon: "🧑‍🍳",
-    alibi: "튀김 요리 중이라 자리를 비운 적 없다고 주장합니다.",
-    tip: "조리 중에는 절대 자리를 비우지 마세요. 불씨 곁은 항상 지켜봐야 해요.",
+    alibi: "가스레인지로 요리를 하고 있었어요",
+    tip: "조리 중에는 절대 자리를 비우지 마세요!",
   },
   {
     id: "repair",
     name: "용의자 B",
     role: "설비 기사",
     icon: "🔧",
-    alibi: "가스 냄새가 나서 전등을 켰어요",
-    tip: "가스가 누출된 상황에서는 전기 스위치를 조작하면 안돼요",
+    alibi: "가스호스를 교체했어요",
+    tip: "호스에서 가스가 새지 않는지 꼭 확인하세요!",
   },
   {
-    id: "student",
+    id: "landlord",
     name: "용의자 C",
-    role: "자취생",
+    role: "집주인",
     icon: "🧑‍🎓",
-    alibi: "사고직전 주방을 떠났다",
-    tip: "가스를 사용할 때는 항상 창문을 열어 환기해주세요.",
+    alibi: "전기난로를 옮기고 있었어요",
+    tip: "가스용기 근처에 전열기구를 두어서는 안돼요!",
   },
 ];
 
@@ -121,17 +127,18 @@ const ROOMS = [
     id: "kitchen",
     name: "주방",
     objects: [
-      { id: "stove", name: "가스레인지", x: 35, y: 72, points: 100, message: "가스레인지 사용 후에는 반드시 밸브를 잠가주세요!" },
+      { id: "stove", name: "가스레인지", x: 35, y: 72, type: "clue", suspectId: "cook", dangerMessage: "가스레인지를 끄지 않아 위험하다!", points: 0, message: "가스레인지 사용 후에는 반드시 밸브를 잠가주세요!" },
       { id: "valve", name: "가스 밸브", x: 40, y: 55, type: "valve", points: 200, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
-      { id: "window", name: "창문", x: 82, y: 28, type: "window", message: "요리할 때는 창문을 열어 환기해주세요." },
+      { id: "window", name: "창문", x: 82, y: 28, type: "window", points: 100, message: "요리할 때는 창문을 열어 환기해주세요." },
+      { id: "hose", name: "가스호스", x: 72, y: 48, type: "clue", suspectId: "repair", dangerMessage: "가스호스가 파손되어 위험하다!", points: 0, message: "가스호스는 자주 구부러지거나 눌리지 않게 관리하고, 낡으면 바로 교체하세요." },
     ],
   },
   {
     id: "living-room",
     name: "거실",
     objects: [
-      { id: "detector", name: "가스 경보기", x: 22, y: 22, type: "alarm", points: 100, message: "가스 경보기는 주기적으로 점검해야 해요." },
-      { id: "extinguisher", name: "소화기", x: 45, y: 82, type: "extinguisher", points: 100, message: "소화기는 안전핀을 뽑고 손잡이를 꾹 눌러야 분사돼요. 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
+      { id: "detector", name: "가스 경보기", x: 22, y: 22, type: "alarm", points: 200, message: "가스 경보기는 주기적으로 점검해야 해요." },
+      { id: "extinguisher", name: "소화기", x: 45, y: 82, type: "extinguisher", points: 200, message: "소화기는 안전핀을 뽑고 손잡이를 꾹 눌러야 분사돼요. 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
       { id: "door-out", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "outside" },
     ],
   },
@@ -149,8 +156,9 @@ const ROOMS = [
     name: "바깥",
     doorOnly: true, // 화살표/스와이프로는 드나들 수 없고 출입구 오브젝트로만 이동 가능
     objects: [
-      { id: "cylinder", name: "가스용기", x: 22, y: 28, type: "spot-diff", points: 100, message: "LNG는 공기보다 가벼워 천장 쪽에, LPG는 공기보다 무거워 바닥 쪽에 머물러요. 그래서 감지기 위치도 서로 달라요!" },
-      { id: "pipe", name: "가스 배관", x: 75, y: 58, type: "pipe", points: 100, message: "낡거나 금이 간 가스 배관은 즉시 새 것으로 교체하세요." },
+      { id: "cylinder", name: "가스용기", x: 22, y: 28, type: "spot-diff", points: 200, message: "LNG는 공기보다 가벼워 천장 쪽에, LPG는 공기보다 무거워 바닥 쪽에 머물러요. 그래서 감지기 위치도 서로 달라요!" },
+      { id: "heater", name: "전기난로", x: 28, y: 40, type: "clue", suspectId: "landlord", dangerMessage: "전기난로가 가스용기와 너무 가까워 위험하다!", points: 0, message: "전기난로는 가스시설이나 가연물에서 충분히 떨어뜨려 사용하세요." },
+      { id: "pipe", name: "가스 배관", x: 75, y: 58, type: "pipe", points: 200, message: "낡거나 금이 간 가스 배관은 즉시 새 것으로 교체하세요." },
       { id: "meter", name: "가스계량기", x: 75, y: 32, points: 100, message: "가스계량기 주변은 항상 비워두고, 계량기와 밸브 상태를 주기적으로 점검하세요." },
       { id: "door-in", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "living-room" },
     ],
@@ -230,6 +238,24 @@ function hideMessage() {
   clearTimeout(messageHideTimer);
   messageBubble.classList.remove("visible");
 }
+
+let clueAlertHideTimer = null;
+
+function showClueAlert(detailText) {
+  clueAlertDetail.textContent = detailText;
+  clueAlertOverlay.classList.add("visible");
+  clearTimeout(clueAlertHideTimer);
+  clueAlertHideTimer = setTimeout(() => {
+    clueAlertOverlay.classList.remove("visible");
+  }, 2600);
+}
+
+function hideClueAlert() {
+  clearTimeout(clueAlertHideTimer);
+  clueAlertOverlay.classList.remove("visible");
+}
+
+clueAlertOverlay.addEventListener("click", hideClueAlert);
 
 function updateNotebookBadge() {
   const count = state.notebookEntries.length;
@@ -317,6 +343,26 @@ function interactObject(room, obj) {
   }
 }
 
+// 용의자별 담당 오브젝트 - 범인의 담당 오브젝트를 누르면 "범인의 흔적" 경고가, 아니면 안전 문구가 뜸
+function openClueEvent(room, obj) {
+  if (state.phase !== "playing") return;
+
+  const key = `${room.id}:${obj.id}`;
+  state.interactedObjects.add(key);
+  addScore(obj.points);
+  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
+  updateNotebookBadge();
+  renderRoom();
+
+  if (obj.suspectId === state.culpritId) {
+    showClueAlert(obj.dangerMessage);
+    setTimeout(() => flyToNotebook(clueAlertOverlay), 300);
+  } else {
+    showMessage(`${obj.name}는 안전하다`);
+    setTimeout(() => flyToNotebook(messageBubble), 300);
+  }
+}
+
 const WINDOW_FRAME_INSET = 10; // window frame rect's x/y offset in the SVG viewBox
 const WINDOW_FRAME_SIZE = 80; // window frame rect's full width in the SVG viewBox
 
@@ -356,7 +402,6 @@ function handleWindowTap() {
 
   windowEventTaps++;
   windowTapProgress[`${windowEventRoom.id}:${windowEventObj.id}`] = windowEventTaps;
-  addScore(1);
 
   windowTapCountEl.textContent = `${windowEventTaps} / ${WINDOW_TAP_TARGET}`;
   windowProgressFill.style.width = `${(windowEventTaps / WINDOW_TAP_TARGET) * 100}%`;
@@ -378,6 +423,7 @@ function completeWindowEvent() {
 
   delete windowTapProgress[key];
   state.interactedObjects.add(key);
+  addScore(obj.points);
   state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
   updateNotebookBadge();
   renderRoom();
@@ -1087,6 +1133,7 @@ const OBJECT_EVENT_HANDLERS = {
   alarm: openAlarmEvent,
   extinguisher: openExtinguisherEvent,
   pipe: openPipeEvent,
+  clue: openClueEvent,
 };
 
 function handleObjectClick(room, obj) {
@@ -1379,13 +1426,47 @@ function resolveBookQuiz(choiceIndex) {
 quizChoiceLeft.addEventListener("click", () => resolveBookQuiz(0));
 quizChoiceRight.addEventListener("click", () => resolveBookQuiz(1));
 
+// 남은 시간을 점수로 환산: 상단 타이머 바가 0으로 줄어드는 동안 HUD 점수가 그만큼 실시간으로 올라감
+// (범인 선택 화면이 뜨기 전, 게임이 끝난 직후에 재생됨)
+function playTimeBonusConversion(onComplete) {
+  const startTime = state.timeRemaining;
+  const bonus = Math.round(startTime) * TIME_BONUS_PER_SECOND;
+
+  if (bonus <= 0) {
+    state.timeRemaining = 0;
+    updateTimerDisplay();
+    onComplete();
+    return;
+  }
+
+  const baseScore = state.score;
+  const duration = 1600;
+  const startAt = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startAt) / duration);
+    state.timeRemaining = startTime * (1 - progress);
+    updateTimerDisplay();
+    scoreEl.textContent = `${baseScore + Math.round(bonus * progress)}`;
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      state.timeRemaining = 0;
+      updateTimerDisplay();
+      state.score = baseScore + bonus;
+      scoreEl.textContent = `${state.score}`;
+      onComplete();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
 function enterAccusationPhase() {
   if (state.phase !== "playing") return;
   state.phase = "accusation";
 
   testControls.classList.add("hidden");
-  timerBarWrap.classList.add("hidden");
-  roomStage.classList.add("hidden");
   notebookBtn.classList.add("hidden");
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
@@ -1394,15 +1475,28 @@ function enterAccusationPhase() {
   alarmEventOverlay.classList.remove("visible");
   pipeEventOverlay.classList.remove("visible");
   quizOverlay.classList.remove("visible");
+  hideClueAlert();
   playerIconEl.classList.remove("zoom-out");
   hideMessage();
 
-  accusationList.innerHTML = "";
-  SUSPECTS.forEach((suspect, index) => {
-    accusationList.appendChild(renderSuspectCard(suspect, true, index));
+  playTimeBonusConversion(() => {
+    timerBarWrap.classList.add("hidden");
+
+    playIntroLine(ACCUSATION_INTRO_LINE, {
+      unblurAfter: false,
+      onComplete: () => {
+        roomStage.classList.add("hidden");
+        roomStage.classList.remove("intro-blur");
+
+        accusationList.innerHTML = "";
+        SUSPECTS.forEach((suspect, index) => {
+          accusationList.appendChild(renderSuspectCard(suspect, true, index));
+        });
+        accusationOverlay.classList.remove("hidden");
+        accusationResolving = false;
+      },
+    });
   });
-  accusationOverlay.classList.remove("hidden");
-  accusationResolving = false;
 }
 
 let accusationResolving = false;
@@ -1413,7 +1507,7 @@ function resolveAccusation(suspectId, cardEl) {
 
   state.correctGuess = suspectId === state.culpritId;
   if (state.correctGuess) {
-    state.score += 50;
+    state.score += 1000;
   }
 
   accusationOverlay.classList.add("choosing");
@@ -1446,9 +1540,54 @@ function resolveAccusation(suspectId, cardEl) {
   }, 950);
 }
 
+const INTRO_LINE = "그럼 추리를 시작하지";
+const ACCUSATION_INTRO_LINE = "이제 범인을 맞춰볼까?";
+let introLineTimer = null;
+
+// 화면을 흐리게 만들고 문구를 한 글자씩 타이핑한 뒤, unblurAfter가 true면 블러를 풀어 방을 다시 선명하게 보여주고
+// false면 블러가 켜진 채로 onComplete를 실행해(다음 화면 전환 등) 이어지도록 함
+function playIntroLine(text, { unblurAfter = true, onComplete } = {}) {
+  clearTimeout(introLineTimer);
+  introLineText.textContent = "";
+
+  // 흐려지는 과정 없이 처음부터 이미 흐린 상태로 시작하고, 끝날 때만 부드럽게 풀리도록 함
+  roomStage.classList.add("no-transition");
+  roomStage.classList.add("intro-blur");
+  void roomStage.offsetWidth; // 위 블러가 트랜지션 없이 즉시 적용되도록 강제 리플로우
+  roomStage.classList.remove("no-transition");
+
+  introLineOverlay.classList.add("visible");
+
+  let i = 0;
+  function typeNext() {
+    if (i < text.length) {
+      introLineText.textContent += text[i];
+      i++;
+      introLineTimer = setTimeout(typeNext, 110);
+    } else {
+      introLineTimer = setTimeout(() => {
+        introLineOverlay.classList.remove("visible");
+        if (unblurAfter) roomStage.classList.remove("intro-blur");
+        if (onComplete) onComplete();
+      }, 700);
+    }
+  }
+  typeNext();
+}
+
+function playInvestigationIntro() {
+  playIntroLine(INTRO_LINE, {
+    onComplete: () => {
+      state.phase = "playing";
+    },
+  });
+}
+
 function startGame() {
   state.started = true;
-  state.phase = "playing"; // TODO: 카운트다운 임시 비활성화. 복구하려면 "countdown"으로 되돌리고 countdownOverlay를 보여주면 됨
+  // 추리 시작 인트로 문구가 사라질 때까지는 "intro" 단계로 두어 타이머가 흐르지 않도록 함 (playInvestigationIntro 완료 시 "playing"으로 전환)
+  // TODO: 카운트다운 임시 비활성화. 복구하려면 "countdown"으로 되돌리고 countdownOverlay를 보여주면 됨
+  state.phase = "intro";
   state.countdown = COUNTDOWN_SECONDS;
   state.timeRemaining = TIME_LIMIT;
   state.score = 0;
@@ -1459,7 +1598,6 @@ function startGame() {
   usedQuizIndices = new Set();
 
   endScreen.classList.add("hidden");
-  timeBonusRow.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
   quizOverlay.classList.remove("visible");
   closeNotebook();
@@ -1471,6 +1609,7 @@ function startGame() {
   playerIconEl.classList.remove("zoom-out");
   updateNotebookBadge();
   hideMessage();
+  hideClueAlert();
   testControls.classList.remove("hidden");
   timerBarWrap.classList.remove("hidden");
   countdownOverlay.classList.add("hidden");
@@ -1481,12 +1620,13 @@ function startGame() {
   resetPlayerIconPosition(true);
   hudScoreDisplayed = 0;
   scoreEl.textContent = `${state.score}`;
+  playInvestigationIntro();
 }
 
 let hudScoreDisplayed = 0;
 let hudScoreAnimId = null;
 
-function animateHudScore(target, duration = 1600) {
+function animateHudScore(target, duration = 2400) {
   if (hudScoreAnimId) cancelAnimationFrame(hudScoreAnimId);
 
   const start = hudScoreDisplayed;
@@ -1516,38 +1656,48 @@ function animateHudScore(target, duration = 1600) {
 function addScore(amount) {
   if (state.phase !== "playing") return;
   state.score += amount;
-  animateHudScore(state.score);
+  setTimeout(() => {
+    animateHudScore(state.score);
+  }, 500);
 }
 
-function animateScoreCountUp(target, duration = 1200, onComplete) {
+const DETECTIVE_TITLES = [
+  { minScore: 3000, title: "전설의 탐정" },
+  { minScore: 2500, title: "완벽한 탐정" },
+  { minScore: 2000, title: "엄청난 탐정" },
+  { minScore: 1500, title: "훌륭한 탐정" },
+  { minScore: 1000, title: "멋진 탐정" },
+  { minScore: 0, title: "평범한 탐정" },
+];
+
+function getDetectiveTitle(score) {
+  const clamped = Math.max(0, score);
+  return DETECTIVE_TITLES.find((tier) => clamped >= tier.minScore).title;
+}
+
+function updateDetectiveTitle(score) {
+  const nextTitle = getDetectiveTitle(score);
+  if (detectiveTitleEl.textContent === nextTitle) return;
+
+  detectiveTitleEl.textContent = nextTitle;
+  detectiveTitleEl.classList.remove("levelup");
+  void detectiveTitleEl.offsetWidth; // restart the level-up pulse even if it's already mid-play
+  detectiveTitleEl.classList.add("levelup");
+}
+
+function animateScoreCountUp(target, duration = 3000, onComplete) {
   const startTime = performance.now();
 
   function tick(now) {
     const progress = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(1 - progress, 3);
-    finalScoreEl.textContent = Math.round(target * eased);
+    const displayed = Math.round(target * eased);
+    finalScoreEl.textContent = displayed;
+    updateDetectiveTitle(displayed);
     if (progress < 1) {
       requestAnimationFrame(tick);
     } else if (onComplete) {
       onComplete();
-    }
-  }
-  requestAnimationFrame(tick);
-}
-
-function animateTimeBonus(timeRemainingStart, bonus, baseScore, duration = 1600) {
-  const startTime = performance.now();
-
-  function tick(now) {
-    const progress = Math.min(1, (now - startTime) / duration);
-    const remaining = timeRemainingStart * (1 - progress);
-    timeBonusClockEl.textContent = formatTime(remaining);
-    finalScoreEl.textContent = baseScore + Math.round(bonus * progress);
-    if (progress < 1) {
-      requestAnimationFrame(tick);
-    } else {
-      timeBonusClockEl.textContent = formatTime(0);
-      finalScoreEl.textContent = baseScore + bonus;
     }
   }
   requestAnimationFrame(tick);
@@ -1558,11 +1708,6 @@ function endGame() {
 
   state.phase = "ended";
   state.started = false;
-
-  const baseScore = state.score;
-  const timeRemainingSnapshot = state.timeRemaining;
-  const timeBonus = Math.round(timeRemainingSnapshot) * TIME_BONUS_PER_SECOND;
-  state.score = baseScore + timeBonus;
 
   countdownOverlay.classList.add("hidden");
   testControls.classList.add("hidden");
@@ -1579,32 +1724,41 @@ function endGame() {
   pipeEventOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
   hideMessage();
+  hideClueAlert();
+  clearTimeout(introLineTimer);
+  roomStage.classList.remove("intro-blur");
+  introLineOverlay.classList.remove("visible");
 
   const culprit = SUSPECTS.find((s) => s.id === state.culpritId);
+  endScreen.classList.remove("result-success", "result-fail", "result-neutral");
+
   if (state.correctGuess === true) {
-    endTitleEl.textContent = "사건 해결! 🎉";
-    endMessageEl.textContent = `범인은 바로 ${culprit.name}(${culprit.role})였습니다! ${culprit.tip}`;
+    endScreen.classList.add("result-success");
+    endTitleEl.textContent = "사건 해결!";
+    culpritIconEl.textContent = culprit.icon;
+    culpritNameEl.textContent = `${culprit.name} (${culprit.role})`;
+    culpritCard.classList.remove("hidden");
+    endMessageEl.textContent = culprit.tip;
   } else if (state.correctGuess === false) {
+    endScreen.classList.add("result-fail");
     endTitleEl.textContent = "추리 실패...";
-    endMessageEl.textContent = `아쉽지만 진범은 ${culprit.name}(${culprit.role})였습니다. ${culprit.tip}`;
+    culpritIconEl.textContent = culprit.icon;
+    culpritNameEl.textContent = `${culprit.name} (${culprit.role})`;
+    culpritCard.classList.remove("hidden");
+    endMessageEl.textContent = culprit.tip;
   } else {
+    endScreen.classList.add("result-neutral");
     endTitleEl.textContent = "안전 점검 완료!";
+    culpritCard.classList.add("hidden");
     endMessageEl.textContent = "가스 냄새가 나면 불씨를 멀리하고 즉시 밸브부터 잠그세요.";
   }
 
   finalScoreEl.textContent = 0;
+  detectiveTitleEl.textContent = getDetectiveTitle(0);
+  detectiveTitleEl.classList.remove("levelup");
   endScreen.classList.remove("hidden");
 
-  if (timeBonus > 0) {
-    timeBonusClockEl.textContent = formatTime(timeRemainingSnapshot);
-    timeBonusRow.classList.remove("hidden");
-    animateScoreCountUp(baseScore, 900, () => {
-      animateTimeBonus(timeRemainingSnapshot, timeBonus, baseScore);
-    });
-  } else {
-    timeBonusRow.classList.add("hidden");
-    animateScoreCountUp(baseScore);
-  }
+  animateScoreCountUp(state.score);
 }
 
 function update(dt) {
