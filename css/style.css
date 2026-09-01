@@ -7,16 +7,31 @@
 html, body {
   width: 100%;
   height: 100%;
-  background: #0c1330;
+  background: #05070f;
   overflow: hidden;
   font-family: "Noto Sans KR", sans-serif;
 }
 
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 모바일 세로 화면 기준으로 만든 UI라, 태블릿/PC처럼 넓은 화면에서는
+   가운데에 일정 너비로 고정하고 양옆을 여백(레터박스) 처리해 레이아웃이 늘어지지 않게 함.
+   모바일에서는 뷰포트 폭이 max-width보다 좁으므로 기존처럼 전체 화면을 그대로 채움 */
 #game-container {
   position: relative;
   width: 100%;
   height: 100%;
+  max-width: 560px;
+  max-height: 960px;
+  margin: 0 auto;
+  background: #0c1330;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
   touch-action: none;
+  overflow: hidden;
 }
 
 .hidden {
