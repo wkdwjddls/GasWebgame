@@ -15,7 +15,7 @@
     <div id="room-view">
       <div id="room-bg"></div>
       <div id="room-objects"></div>
-      <div id="player-icon">🔍</div>
+      <div id="player-icon"><img src="assets/images/im_돋보기.png" alt="" /></div>
     </div>
     <button id="room-arrow-left" class="room-arrow" type="button" aria-label="이전 방으로 이동">‹</button>
     <button id="room-arrow-right" class="room-arrow" type="button" aria-label="다음 방으로 이동">›</button>
@@ -38,7 +38,7 @@
   </div>
 
   <button id="notebook-btn" class="hidden" type="button" aria-label="사건 수첩 열기">
-    <span class="notebook-icon">🗒️</span>
+    <img class="notebook-icon" src="assets/images/im_수첩.png" alt="">
     <span id="notebook-badge" class="notebook-badge hidden">0</span>
   </button>
 
@@ -107,23 +107,6 @@
     <span id="valve-progress-text">열린 밸브 3개</span>
   </div>
 
-  <div id="spotdiff-event-overlay">
-    <button id="spotdiff-event-close" type="button" aria-label="닫기">✕</button>
-    <span class="badge">LNG vs LPG</span>
-    <h1>두 그림에서 다른 점 3가지를 찾아 터치하세요!</h1>
-    <div id="spotdiff-panels">
-      <div class="spotdiff-panel">
-        <span class="spotdiff-panel-title">LPG</span>
-        <div id="spotdiff-room-lng" class="spotdiff-room"></div>
-      </div>
-      <div class="spotdiff-panel">
-        <span class="spotdiff-panel-title">LNG</span>
-        <div id="spotdiff-room-lpg" class="spotdiff-room"></div>
-      </div>
-    </div>
-    <p id="spotdiff-feedback"></p>
-    <span id="spotdiff-progress-text">0 / 3</span>
-  </div>
 
   <div id="alarm-event-overlay">
     <button id="alarm-event-close" type="button" aria-label="닫기">✕</button>
@@ -208,9 +191,7 @@
   </div>
 
   <div id="start-screen">
-    <span class="badge">교육용 가스안전 게임</span>
-    <img class="mockup-image" src="assets/images/gas-safety-mockup.svg" alt="가스레인지, 가스통 밸브, 경보기를 점검하는 교육용 게임 목업 이미지" />
-    <h1>가스 탐정단!</h1>
+    <img class="mockup-image" src="assets/images/intro.png" alt="가스탐정단 - 범인을 찾아라" />
     <p class="subtitle">임시 문구 : 가스레인지부터 밸브, 경보기까지<br />우리 집 가스안전 수칙을 게임으로 배워요</p>
     <button id="start-btn">추리 시작하기</button>
   </div>
@@ -246,7 +227,6 @@
   </div>
 
   <div id="accusation-overlay" class="hidden">
-    <span class="badge">최종 추리</span>
     <h1>범인을 지목하세요!</h1>
     <div id="accusation-list" class="suspect-list"></div>
   </div>
@@ -261,7 +241,7 @@
     </div>
 
     <div id="culprit-card" class="hidden">
-      <span id="culprit-icon"></span>
+      <img id="culprit-icon" alt="" />
       <div id="culprit-info">
         <span class="culprit-label">범인</span>
         <span id="culprit-name"></span>

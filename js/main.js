@@ -29,6 +29,7 @@ cutsceneOverlay.addEventListener("click", () => {
     return;
   }
   cutsceneOverlay.classList.add("hidden");
+  document.getElementById("hud").classList.remove("hidden");
   stopWarningLoop();
   assignCulprit();
   startGame();
@@ -36,6 +37,7 @@ cutsceneOverlay.addEventListener("click", () => {
 
 document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("hud").classList.add("hidden");
 
   cutsceneRevealIndex = 0;
   cutsceneLines.forEach((line) => line.classList.remove("revealed"));

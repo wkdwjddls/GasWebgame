@@ -29,12 +29,6 @@ const valveEventOverlay = document.getElementById("valve-event-overlay");
 const valveEventClose = document.getElementById("valve-event-close");
 const valveGridEl = document.getElementById("valve-grid");
 const valveProgressText = document.getElementById("valve-progress-text");
-const spotdiffEventOverlay = document.getElementById("spotdiff-event-overlay");
-const spotdiffEventClose = document.getElementById("spotdiff-event-close");
-const spotdiffRoomLngEl = document.getElementById("spotdiff-room-lng");
-const spotdiffRoomLpgEl = document.getElementById("spotdiff-room-lpg");
-const spotdiffFeedbackEl = document.getElementById("spotdiff-feedback");
-const spotdiffProgressText = document.getElementById("spotdiff-progress-text");
 const alarmEventOverlay = document.getElementById("alarm-event-overlay");
 const alarmEventClose = document.getElementById("alarm-event-close");
 const alarmPlayfieldEl = document.getElementById("alarm-playfield");
@@ -100,6 +94,7 @@ const SUSPECTS = [
     name: "용의자 A",
     role: "요리사",
     icon: "🧑‍🍳",
+    image: "assets/images/sus_1.png",
     alibi: "가스레인지로 요리를 했어요",
     tip: "조리 중에는 절대 자리를 비우지 마세요!",
   },
@@ -108,6 +103,7 @@ const SUSPECTS = [
     name: "용의자 B",
     role: "설비 기사",
     icon: "🔧",
+    image: "assets/images/sus_2.png",
     alibi: "가스호스를 교체하고 있었어요",
     tip: "호스에서 가스가 새지 않는지 꼭 확인하세요!",
   },
@@ -116,6 +112,7 @@ const SUSPECTS = [
     name: "용의자 C",
     role: "집주인",
     icon: "🧑‍🎓",
+    image: "assets/images/sus_3.png",
     alibi: "전기난로를 옮기고 있었어요",
     tip: "가스용기 근처에 전열기구를 두어서는 안돼요!",
   },
@@ -125,41 +122,52 @@ const ROOMS = [
   {
     id: "kitchen",
     name: "주방",
+    bg: "assets/images/bg_주방.png",
+    bgW: 912,
+    bgH: 1168,
     objects: [
-      { id: "stove", name: "가스레인지", x: 35, y: 72, type: "clue", suspectId: "cook", dangerMessage: "가스레인지를 끄지 않아 위험하다!", points: 0, message: "가스레인지 사용 후에는 반드시 밸브를 잠가주세요!" },
-      { id: "valve", name: "가스 밸브", x: 40, y: 55, type: "valve", points: 200, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요." },
-      { id: "window", name: "창문", x: 82, y: 28, type: "window", points: 100, message: "요리할 때는 창문을 열어 환기해주세요." },
-      { id: "hose", name: "가스호스", x: 72, y: 48, type: "clue", suspectId: "repair", dangerMessage: "가스호스가 파손되어 위험하다!", points: 0, message: "가스호스는 자주 구부러지거나 눌리지 않게 관리하고, 낡으면 바로 교체하세요." },
+      { id: "stove", name: "가스레인지", imgX: 83.5, imgY: 63.4, imgW: 33, imgH: 10, type: "clue", suspectId: "cook", dangerMessage: "가스레인지를 끄지 않아 위험하다!", points: 0, message: "가스레인지 사용 후 반드시 밸브를 잠가주세요!" },
+      { id: "valve", name: "가스 밸브", imgX: 66.9, imgY: 25.3, imgW: 11, imgH: 11, type: "valve", points: 200, message: "사용하지 않을 때는 가스 밸브를 꼭 잠가두세요" },
+      { id: "window", name: "창문", imgX: 32.4, imgY: 31.3, imgW: 49, imgH: 52, type: "window", points: 200, message: "요리할 때는 창문을 열어 환기해주세요" },
+      { id: "hose", name: "가스호스", imgX: 69, imgY: 44.7, imgW: 22, imgH: 27, type: "clue", suspectId: "repair", dangerMessage: "가스호스가 파손되어 위험하다!", points: 0, message: "가스호스가 낡으면 바로 교체하세요" },
     ],
   },
   {
     id: "living-room",
     name: "거실",
+    bg: "assets/images/bg_거실.png",
+    bgW: 912,
+    bgH: 1168,
     objects: [
-      { id: "detector", name: "가스 경보기", x: 22, y: 22, type: "alarm", points: 200, message: "가스 경보기는 주기적으로 점검해야 해요." },
-      { id: "extinguisher", name: "소화기", x: 45, y: 82, type: "extinguisher", points: 200, message: "소화기는 안전핀을 뽑고 손잡이를 꾹 눌러야 분사돼요. 잘 보이는 곳에 두고 사용법을 미리 익혀두세요." },
-      { id: "door-out", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "outside" },
+      { id: "detector", name: "가스 경보기", imgX: 54.4, imgY: 35.7, imgW: 10, imgH: 8, type: "alarm", points: 200, message: "가스 경보기는 주기적으로 점검해야 해요" },
+      { id: "extinguisher", name: "소화기", imgX: 55.4, imgY: 82.3, imgW: 13, imgH: 22, type: "extinguisher", points: 200, message: "소화기 사용법을 미리 익혀두세요" },
+      { id: "door-out", name: "출입구", imgX: 69.4, imgY: 51.2, imgW: 13, imgH: 30, type: "door", targetRoomId: "outside" },
     ],
   },
   {
     id: "bedroom",
     name: "침실",
+    bg: "assets/images/bg_침실.png",
+    bgW: 912,
+    bgH: 1168,
     objects: [
-      { id: "book", name: "책", x: 50, y: 50, type: "quiz", message: "책에서 배운 가스 안전 상식을 다시 떠올려보세요." },
-      { id: "tv", name: "TV", x: 25, y: 25, type: "quiz", message: "TV에서 본 가스 안전 상식을 다시 떠올려보세요." },
-      { id: "outlet", name: "멀티탭", x: 75, y: 75, points: 100, message: "문어발식 콘센트 사용은 화재 위험이 있으니 피해주세요." },
+      { id: "tv", name: "TV", imgX: 59.9, imgY: 31.3, imgW: 21, imgH: 11, type: "quiz", message: "TV에서 본 가스 안전 상식을 다시 떠올려보세요" },
+      { id: "book", name: "책", imgX: 78.2, imgY: 70.6, imgW: 25, imgH: 14, type: "quiz", message: "책에서 본 가스 안전 상식을 다시 떠올려보세요" },
+      { id: "outlet", name: "멀티탭", imgX: 20.1, imgY: 80.3, imgW: 17, imgH: 11, points: 100, message: "문어발식 콘센트 사용은 위험해요" },
     ],
   },
   {
     id: "outside",
     name: "바깥",
-    doorOnly: true, // 화살표/스와이프로는 드나들 수 없고 출입구 오브젝트로만 이동 가능
+    doorOnly: true, // 화살표/스와이프로는 드나들 수 없고 화살표 버튼(거실로 돌아가기)으로만 나갈 수 있음
+    bg: "assets/images/bg_바깥.png",
+    bgW: 912,
+    bgH: 1168,
     objects: [
-      { id: "cylinder", name: "가스용기", x: 22, y: 28, type: "spot-diff", points: 200, message: "LNG는 공기보다 가벼워 천장 쪽에, LPG는 공기보다 무거워 바닥 쪽에 머물러요. 그래서 감지기 위치도 서로 달라요!" },
-      { id: "heater", name: "전기난로", x: 28, y: 40, type: "clue", suspectId: "landlord", dangerMessage: "전기난로가 가스용기와 너무 가까워 위험하다!", points: 0, message: "전기난로는 가스시설이나 가연물에서 충분히 떨어뜨려 사용하세요." },
-      { id: "pipe", name: "가스 배관", x: 75, y: 58, type: "pipe", points: 200, message: "낡거나 금이 간 가스 배관은 즉시 새 것으로 교체하세요." },
-      { id: "meter", name: "가스계량기", x: 75, y: 32, points: 100, message: "가스계량기 주변은 항상 비워두고, 계량기와 밸브 상태를 주기적으로 점검하세요." },
-      { id: "door-in", name: "출입구", x: 50, y: 50, type: "door", targetRoomId: "living-room" },
+      { id: "cylinder", name: "가스용기", imgX: 48.5, imgY: 76.4, imgW: 21, imgH: 24, points: 100, message: "LNG와 LPG는 다른 가스에요" },
+      { id: "heater", name: "전기난로", imgX: 31, imgY: 77.5, imgW: 10, imgH: 10, type: "clue", suspectId: "landlord", dangerMessage: "전기난로가 가스용기와 너무 가까워 위험하다!", points: 0, message: "전기난로는 가스시설과 멀리 두세요" },
+      { id: "pipe", name: "가스 배관", imgX: 58.7, imgY: 51, imgW: 44, imgH: 6, type: "pipe", points: 200, message: "낡거나 금이 간 가스 배관은 즉시 교체하세요" },
+      { id: "meter", name: "가스계량기", imgX: 67.2, imgY: 60.1, imgW: 11, imgH: 9, points: 100, message: "가스계량기는 주기적으로 점검하세요" },
     ],
   },
 ];
@@ -363,7 +371,7 @@ function openClueEvent(room, obj) {
     showClueAlert(obj.dangerMessage);
     setTimeout(() => flyToNotebook(clueAlertOverlay), 300);
   } else {
-    showMessage(`${obj.name}는 안전하다`);
+    showMessage(obj.message);
     setTimeout(() => flyToNotebook(messageBubble), 300);
   }
 }
@@ -535,151 +543,6 @@ valveEventClose.addEventListener("click", () => {
 });
 
 // 220x380 뷰박스 기준 좌표. 천장 0~70 / 벽 70~320 / 바닥 320~380
-const SPOT_DIFF_ITEMS = [
-  {
-    id: "label",
-    isLabel: true,
-    x: 110,
-    y: 40,
-    explanation: "이름부터 달라요! LNG(액화천연가스)와 LPG(액화석유가스)는 서로 다른 가스예요.",
-  },
-  {
-    id: "cloud",
-    icon: "💨",
-    x: 52,
-    lngY: 52,
-    lpgY: 300,
-    explanation: "LNG는 공기보다 가벼워 위로 떠오르고, LPG는 공기보다 무거워 아래로 가라앉아요.",
-  },
-  {
-    id: "detector",
-    icon: "🔔",
-    x: 176,
-    lngY: 48,
-    lpgY: 302,
-    explanation: "그래서 가스 경보기 위치도 달라요. LNG는 천장 쪽, LPG는 바닥 쪽에 설치해야 해요.",
-  },
-];
-
-let spotDiffRoom = null;
-let spotDiffObj = null;
-let spotDiffFound = new Set();
-
-function renderSpotDiffHotspot(item, side) {
-  const y = item.isLabel ? item.y : side === "lng" ? item.lngY : item.lpgY;
-
-  if (item.isLabel) {
-    const text = side === "lng" ? "LNG" : "LPG";
-    return `
-      <g class="spotdiff-hotspot" data-item-id="${item.id}" transform="translate(${item.x}, ${y})">
-        <circle r="34" class="sd-hit"></circle>
-        <circle r="36" class="sd-found-ring"></circle>
-        <rect x="-28" y="-16" width="56" height="32" rx="16" class="sd-chip"></rect>
-        <text text-anchor="middle" dy="6" class="sd-chip-text">${text}</text>
-        <circle class="sd-check-bg" cx="26" cy="-20" r="9"></circle>
-        <text class="sd-check-text" x="26" y="-16" text-anchor="middle">✓</text>
-      </g>`;
-  }
-
-  return `
-    <g class="spotdiff-hotspot" data-item-id="${item.id}" transform="translate(${item.x}, ${y})">
-      <circle r="28" class="sd-hit"></circle>
-      <circle r="28" class="sd-found-ring"></circle>
-      <text text-anchor="middle" dy="8" class="sd-emoji">${item.icon}</text>
-      <circle class="sd-check-bg" cx="20" cy="-18" r="9"></circle>
-      <text class="sd-check-text" x="20" y="-14" text-anchor="middle">✓</text>
-    </g>`;
-}
-
-function renderSpotDiffPanel(panelEl, side) {
-  panelEl.innerHTML = `
-    <svg viewBox="0 0 220 380" class="spotdiff-scene-svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <rect x="0" y="0" width="220" height="380" rx="16" class="sd-card-bg"></rect>
-      <rect x="0" y="0" width="220" height="70" class="sd-ceiling"></rect>
-      <rect x="0" y="70" width="220" height="250" class="sd-wall"></rect>
-      <rect x="0" y="320" width="220" height="60" class="sd-floor"></rect>
-      <line x1="0" y1="341" x2="220" y2="341" class="sd-floor-line"></line>
-      <line x1="0" y1="361" x2="220" y2="361" class="sd-floor-line"></line>
-      <rect x="148" y="108" width="48" height="70" rx="4" class="sd-window-frame"></rect>
-      <rect x="153" y="113" width="38" height="60" class="sd-window-glass"></rect>
-      <line x1="172" y1="113" x2="172" y2="173" class="sd-window-cross"></line>
-      <line x1="153" y1="143" x2="191" y2="143" class="sd-window-cross"></line>
-      <line x1="110" y1="228" x2="110" y2="300" class="sd-pipe"></line>
-      <rect x="82" y="300" width="56" height="24" rx="4" class="sd-stove-body"></rect>
-      <text x="110" y="297" text-anchor="middle" class="sd-emoji sd-emoji-flame">🔥</text>
-      ${SPOT_DIFF_ITEMS.map((item) => renderSpotDiffHotspot(item, side)).join("")}
-    </svg>`;
-}
-
-function handleSpotDiffPanelClick(event) {
-  const hotspot = event.target.closest(".spotdiff-hotspot");
-  if (!hotspot) return;
-  handleSpotDiffTap(hotspot.dataset.itemId);
-}
-
-spotdiffRoomLngEl.addEventListener("click", handleSpotDiffPanelClick);
-spotdiffRoomLpgEl.addEventListener("click", handleSpotDiffPanelClick);
-
-function openSpotDiffEvent(room, obj) {
-  if (state.phase !== "playing") return;
-
-  spotDiffRoom = room;
-  spotDiffObj = obj;
-  spotDiffFound = new Set();
-
-  spotdiffFeedbackEl.textContent = "";
-  spotdiffFeedbackEl.classList.remove("visible");
-  spotdiffProgressText.textContent = `0 / ${SPOT_DIFF_ITEMS.length}`;
-
-  renderSpotDiffPanel(spotdiffRoomLngEl, "lng");
-  renderSpotDiffPanel(spotdiffRoomLpgEl, "lpg");
-
-  openLensOverlay(spotdiffEventOverlay, obj);
-}
-
-function handleSpotDiffTap(itemId) {
-  if (spotDiffFound.has(itemId)) return;
-
-  playSound("success", 0.4);
-  spotDiffFound.add(itemId);
-  document.querySelectorAll(`.spotdiff-hotspot[data-item-id="${itemId}"]`).forEach((el) => {
-    el.classList.add("found");
-  });
-
-  const item = SPOT_DIFF_ITEMS.find((i) => i.id === itemId);
-  spotdiffFeedbackEl.innerHTML = `<strong>찾았어요!</strong><br>${item.explanation}`;
-  spotdiffFeedbackEl.classList.remove("visible");
-  void spotdiffFeedbackEl.offsetWidth; // restart the grow-in animation on every find
-  spotdiffFeedbackEl.classList.add("visible");
-  spotdiffProgressText.textContent = `${spotDiffFound.size} / ${SPOT_DIFF_ITEMS.length}`;
-
-  if (spotDiffFound.size >= SPOT_DIFF_ITEMS.length) {
-    completeSpotDiffEvent();
-  }
-}
-
-function completeSpotDiffEvent() {
-  const room = spotDiffRoom;
-  const obj = spotDiffObj;
-  const key = `${room.id}:${obj.id}`;
-
-  state.interactedObjects.add(key);
-  addScore(obj.points);
-  state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
-  updateNotebookBadge();
-  renderRoom();
-
-  setTimeout(() => {
-    closeLensOverlay(spotdiffEventOverlay);
-    showMessage(obj.message);
-    setTimeout(() => flyToNotebook(messageBubble), 300);
-  }, 1200);
-}
-
-spotdiffEventClose.addEventListener("click", () => {
-  closeLensOverlay(spotdiffEventOverlay);
-});
-
 let alarmRoom = null;
 let alarmObj = null;
 let alarmHits = 0;
@@ -1137,7 +1000,6 @@ pipeEventClose.addEventListener("click", () => {
 const OBJECT_EVENT_HANDLERS = {
   window: openWindowEvent,
   valve: openValveEvent,
-  "spot-diff": openSpotDiffEvent,
   quiz: openBookQuizEvent,
   alarm: openAlarmEvent,
   extinguisher: openExtinguisherEvent,
@@ -1204,18 +1066,44 @@ function closeLensOverlay(overlayEl) {
   playerIconEl.classList.remove("zoom-out");
 }
 
+// 배경 사진 속 오브젝트의 실제 위치(imgX/imgY, 이미지 원본 기준 %)를,
+// background-size:contain으로 화면에 표시된 사진의 레터박스를 감안해 현재 화면 비율에 맞는 % 좌표로 변환
+function mapImageRectToContainer(room, obj, containerW, containerH) {
+  const scale = Math.min(containerW / room.bgW, containerH / room.bgH);
+  const dispW = room.bgW * scale;
+  const dispH = room.bgH * scale;
+  const offsetX = (containerW - dispW) / 2;
+  const offsetY = (containerH - dispH) / 2;
+
+  return {
+    x: ((offsetX + (obj.imgX / 100) * dispW) / containerW) * 100,
+    y: ((offsetY + (obj.imgY / 100) * dispH) / containerH) * 100,
+    w: ((obj.imgW / 100) * dispW / containerW) * 100,
+    h: ((obj.imgH / 100) * dispH / containerH) * 100,
+  };
+}
+
 function renderRoom() {
   const room = ROOMS[state.roomIndex];
 
   roomBg.setAttribute("data-label", room.name);
+  roomBg.classList.toggle("has-photo", Boolean(room.bg));
+  roomBg.style.backgroundImage = room.bg ? `url("${room.bg}")` : "";
   roomNameEl.textContent = room.name;
 
   const prevRoom = ROOMS[state.roomIndex - 1];
   const nextRoom = ROOMS[state.roomIndex + 1];
-  roomArrowLeft.classList.toggle("disabled", Boolean(room.doorOnly || state.roomIndex === 0 || (prevRoom && prevRoom.doorOnly)));
+  if (room.id === "outside") {
+    roomArrowLeft.classList.remove("disabled");
+    roomArrowLeft.setAttribute("aria-label", "거실로 돌아가기");
+  } else {
+    roomArrowLeft.classList.toggle("disabled", Boolean(room.doorOnly || state.roomIndex === 0 || (prevRoom && prevRoom.doorOnly)));
+    roomArrowLeft.setAttribute("aria-label", "이전 방으로 이동");
+  }
   roomArrowRight.classList.toggle("disabled", Boolean(room.doorOnly || state.roomIndex === ROOMS.length - 1 || (nextRoom && nextRoom.doorOnly)));
 
   roomObjectsEl.innerHTML = "";
+  const containerRect = room.bg ? roomObjectsEl.getBoundingClientRect() : null;
   room.objects.forEach((obj) => {
     const key = `${room.id}:${obj.id}`;
     const btn = document.createElement("button");
@@ -1223,14 +1111,36 @@ function renderRoom() {
     btn.className = "room-object";
     if (obj.type === "door") btn.classList.add("door");
     if (state.interactedObjects.has(key)) btn.classList.add("checked");
-    btn.style.left = `${obj.x}%`;
-    btn.style.top = `${obj.y}%`;
+
+    if (room.bg && obj.imgX !== undefined && containerRect.width && containerRect.height) {
+      const rect = mapImageRectToContainer(room, obj, containerRect.width, containerRect.height);
+      btn.style.left = `${rect.x}%`;
+      btn.style.top = `${rect.y}%`;
+      btn.style.width = `${rect.w}%`;
+      btn.style.height = `${rect.h}%`;
+    } else {
+      btn.style.left = `${obj.x}%`;
+      btn.style.top = `${obj.y}%`;
+      if (obj.hitW && obj.hitH) {
+        btn.style.width = `${obj.hitW}%`;
+        btn.style.height = `${obj.hitH}%`;
+      }
+    }
+
     const icon = obj.type === "door" ? "🚪 " : "";
     btn.innerHTML = `<span class="room-object-placeholder">${icon}${obj.name}</span>`;
     btn.addEventListener("click", () => handleObjectClick(room, obj));
     roomObjectsEl.appendChild(btn);
   });
 }
+
+let resizeRenderTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeRenderTimer);
+  resizeRenderTimer = setTimeout(() => {
+    if (ROOMS[state.roomIndex]) renderRoom();
+  }, 150);
+});
 
 let roomTransitionLock = false;
 
@@ -1317,7 +1227,13 @@ function goToRoomById(targetId) {
   fadeToRoomIndex(targetIndex);
 }
 
-roomArrowLeft.addEventListener("click", () => goToRoom(-1));
+roomArrowLeft.addEventListener("click", () => {
+  if (ROOMS[state.roomIndex].id === "outside") {
+    goToRoomById("living-room");
+    return;
+  }
+  goToRoom(-1);
+});
 roomArrowRight.addEventListener("click", () => goToRoom(1));
 
 // 방 안 어디를 터치하든 돋보기(플레이어 아이콘)가 그 위치로 이동
@@ -1351,10 +1267,14 @@ function renderSuspectCard(suspect, clickable, index) {
   el.className = "suspect-card";
   el.style.animationDelay = `${index * 0.25}s`;
   el.innerHTML = `
-    <span class="suspect-icon">${suspect.icon}</span>
-    <span class="suspect-name">${suspect.name}</span>
-    <span class="suspect-role">${suspect.role}</span>
-    <span class="suspect-alibi">${suspect.alibi}</span>
+    <span class="suspect-icon-wrap"><img class="suspect-icon" src="${suspect.image}" alt="${suspect.name}"></span>
+    <div class="suspect-info">
+      <div class="suspect-name-row">
+        <span class="suspect-name">${suspect.name}</span>
+        <span class="suspect-role">${suspect.role}</span>
+      </div>
+      <span class="suspect-alibi">${suspect.alibi}</span>
+    </div>
   `;
   if (clickable) {
     el.addEventListener("click", () => resolveAccusation(suspect.id, el));
@@ -1484,7 +1404,6 @@ function enterAccusationPhase() {
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
-  spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
   pipeEventOverlay.classList.remove("visible");
   quizOverlay.classList.remove("visible");
@@ -1618,7 +1537,6 @@ function startGame() {
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
-  spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
   pipeEventOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
@@ -1734,7 +1652,6 @@ function endGame() {
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
   valveEventOverlay.classList.remove("visible");
-  spotdiffEventOverlay.classList.remove("visible");
   alarmEventOverlay.classList.remove("visible");
   pipeEventOverlay.classList.remove("visible");
   playerIconEl.classList.remove("zoom-out");
@@ -1750,14 +1667,16 @@ function endGame() {
   if (state.correctGuess === true) {
     endScreen.classList.add("result-success");
     endTitleEl.textContent = "사건 해결!";
-    culpritIconEl.textContent = culprit.icon;
+    culpritIconEl.src = culprit.image;
+    culpritIconEl.alt = culprit.name;
     culpritNameEl.textContent = `${culprit.name} (${culprit.role})`;
     culpritCard.classList.remove("hidden");
     endMessageEl.textContent = culprit.tip;
   } else if (state.correctGuess === false) {
     endScreen.classList.add("result-fail");
     endTitleEl.textContent = "추리 실패...";
-    culpritIconEl.textContent = culprit.icon;
+    culpritIconEl.src = culprit.image;
+    culpritIconEl.alt = culprit.name;
     culpritNameEl.textContent = `${culprit.name} (${culprit.role})`;
     culpritCard.classList.remove("hidden");
     endMessageEl.textContent = culprit.tip;
