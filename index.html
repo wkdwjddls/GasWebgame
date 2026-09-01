@@ -49,6 +49,7 @@
         <button id="notebook-close-btn" type="button" aria-label="수첩 닫기">✕</button>
       </div>
       <div id="notebook-entries"></div>
+      <button id="end-game-btn" type="button">사건 종료</button>
     </div>
   </div>
 
@@ -112,11 +113,11 @@
     <h1>두 그림에서 다른 점 3가지를 찾아 터치하세요!</h1>
     <div id="spotdiff-panels">
       <div class="spotdiff-panel">
-        <span class="spotdiff-panel-title">가정 A</span>
+        <span class="spotdiff-panel-title">LPG</span>
         <div id="spotdiff-room-lng" class="spotdiff-room"></div>
       </div>
       <div class="spotdiff-panel">
-        <span class="spotdiff-panel-title">가정 B</span>
+        <span class="spotdiff-panel-title">LNG</span>
         <div id="spotdiff-room-lpg" class="spotdiff-room"></div>
       </div>
     </div>
@@ -138,7 +139,7 @@
     <h1 id="extinguisher-instruction">안전핀 고리를 당겨서 뽑아주세요!</h1>
     <div id="extinguisher-stage">
       <span id="extinguisher-fire">🔥</span>
-      <span id="extinguisher-press-hint" class="hidden">✋ 소화기를 꾹 눌러주세요</span>
+      <span id="extinguisher-press-hint" class="hidden">소화기를 꾹 눌러주세요</span>
       <svg id="extinguisher-svg" viewBox="0 0 200 300" aria-hidden="true">
         <g id="extinguisher-body-group">
           <path d="M120 92 q38 8 30 56" class="ext-hose"></path>
@@ -200,10 +201,6 @@
     <span id="score">0</span>
   </div>
 
-  <div id="test-controls" class="hidden">
-    <button id="add-score-btn" type="button">점수 +10 (테스트)</button>
-    <button id="end-game-btn" type="button">게임 종료 (테스트)</button>
-  </div>
 
   <div id="countdown-overlay" class="hidden">
     <span class="countdown-label">안전 점검 시작까지</span>
@@ -260,7 +257,7 @@
     <div id="score-card">
       <p class="subtitle">최종 점수</p>
       <div id="final-score">0</div>
-      <span id="detective-title" class="badge">평범한 탐정</span>
+      <span id="detective-title">평범한 탐정</span>
     </div>
 
     <div id="culprit-card" class="hidden">

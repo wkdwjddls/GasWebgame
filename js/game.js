@@ -59,7 +59,6 @@ const pipeProgressText = document.getElementById("pipe-progress-text");
 const timerBarWrap = document.getElementById("timer-bar-wrap");
 const timerBarFill = document.getElementById("timer-bar-fill");
 const timerText = document.getElementById("timer-text");
-const testControls = document.getElementById("test-controls");
 const countdownOverlay = document.getElementById("countdown-overlay");
 const countdownNumber = document.getElementById("countdown-number");
 const endScreen = document.getElementById("end-screen");
@@ -1481,7 +1480,6 @@ function enterAccusationPhase() {
   if (state.phase !== "playing") return;
   state.phase = "accusation";
 
-  testControls.classList.add("hidden");
   notebookBtn.classList.add("hidden");
   closeNotebook();
   windowEventOverlay.classList.remove("visible");
@@ -1627,7 +1625,6 @@ function startGame() {
   updateNotebookBadge();
   hideMessage();
   hideClueAlert();
-  testControls.classList.remove("hidden");
   timerBarWrap.classList.remove("hidden");
   countdownOverlay.classList.add("hidden");
   roomStage.classList.remove("hidden");
@@ -1680,24 +1677,25 @@ function addScore(amount, { silent = false } = {}) {
 }
 
 const DETECTIVE_TITLES = [
-  { minScore: 3000, title: "전설의 탐정" },
-  { minScore: 2500, title: "완벽한 탐정" },
-  { minScore: 2000, title: "엄청난 탐정" },
-  { minScore: 1500, title: "훌륭한 탐정" },
-  { minScore: 1000, title: "멋진 탐정" },
-  { minScore: 0, title: "평범한 탐정" },
+  { minScore: 3000, title: "전설의 탐정", color: "#ff6b6b" },
+  { minScore: 2500, title: "완벽한 탐정", color: "#ffb703" },
+  { minScore: 2000, title: "엄청난 탐정", color: "#c792ea" },
+  { minScore: 1500, title: "훌륭한 탐정", color: "#7be09c" },
+  { minScore: 1000, title: "멋진 탐정", color: "#7ee8fa" },
+  { minScore: 0, title: "평범한 탐정", color: "#9aa5c9" },
 ];
 
-function getDetectiveTitle(score) {
+function getDetectiveTier(score) {
   const clamped = Math.max(0, score);
-  return DETECTIVE_TITLES.find((tier) => clamped >= tier.minScore).title;
+  return DETECTIVE_TITLES.find((tier) => clamped >= tier.minScore);
 }
 
 function updateDetectiveTitle(score) {
-  const nextTitle = getDetectiveTitle(score);
-  if (detectiveTitleEl.textContent === nextTitle) return;
+  const tier = getDetectiveTier(score);
+  if (detectiveTitleEl.textContent === tier.title) return;
 
-  detectiveTitleEl.textContent = nextTitle;
+  detectiveTitleEl.textContent = tier.title;
+  detectiveTitleEl.style.color = tier.color;
   detectiveTitleEl.classList.remove("levelup");
   void detectiveTitleEl.offsetWidth; // restart the level-up pulse even if it's already mid-play
   detectiveTitleEl.classList.add("levelup");
@@ -1728,7 +1726,6 @@ function endGame() {
   state.started = false;
 
   countdownOverlay.classList.add("hidden");
-  testControls.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
   accusationOverlay.classList.add("hidden");
   quizOverlay.classList.remove("visible");
@@ -1772,7 +1769,9 @@ function endGame() {
   }
 
   finalScoreEl.textContent = 0;
-  detectiveTitleEl.textContent = getDetectiveTitle(0);
+  const initialTier = getDetectiveTier(0);
+  detectiveTitleEl.textContent = initialTier.title;
+  detectiveTitleEl.style.color = initialTier.color;
   detectiveTitleEl.classList.remove("levelup");
   endScreen.classList.remove("hidden");
 

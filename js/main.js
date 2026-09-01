@@ -47,10 +47,6 @@ document.getElementById("start-btn").addEventListener("click", () => {
   requestAnimationFrame(loop);
 });
 
-document.getElementById("add-score-btn").addEventListener("click", () => {
-  addScore(10);
-});
-
 document.getElementById("end-game-btn").addEventListener("click", () => {
   enterAccusationPhase();
 });
