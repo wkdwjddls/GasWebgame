@@ -1127,8 +1127,7 @@ function renderRoom() {
       }
     }
 
-    const icon = obj.type === "door" ? "🚪 " : "";
-    btn.innerHTML = `<span class="room-object-placeholder">${icon}${obj.name}</span>`;
+    btn.innerHTML = `<span class="room-object-placeholder">${obj.name}</span>`;
     btn.addEventListener("click", () => handleObjectClick(room, obj));
     roomObjectsEl.appendChild(btn);
   });
