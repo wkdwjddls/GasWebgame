@@ -301,6 +301,7 @@ notebookOverlay.addEventListener("click", (e) => {
 });
 
 function flyToNotebook(originEl) {
+  playSound("notebook", 0.4);
   const originRect = originEl.getBoundingClientRect();
   const targetRect = notebookBtn.getBoundingClientRect();
   const size = 28;
@@ -347,14 +348,19 @@ function interactObject(room, obj) {
 function openClueEvent(room, obj) {
   if (state.phase !== "playing") return;
 
+  const isCulprit = obj.suspectId === state.culpritId;
+  // 범인의 흔적일 땐 경고음만 나오도록, 버튼 공통 클릭음과 점수 획득음은 억제
+  if (isCulprit) window.suppressClickSound = true;
+
   const key = `${room.id}:${obj.id}`;
   state.interactedObjects.add(key);
-  addScore(obj.points);
+  addScore(obj.points, { silent: isCulprit });
   state.notebookEntries.push({ roomName: room.name, objectName: obj.name, message: obj.message });
   updateNotebookBadge();
   renderRoom();
 
-  if (obj.suspectId === state.culpritId) {
+  if (isCulprit) {
+    playSound("warning", 0.5);
     showClueAlert(obj.dangerMessage);
     setTimeout(() => flyToNotebook(clueAlertOverlay), 300);
   } else {
@@ -635,6 +641,7 @@ function openSpotDiffEvent(room, obj) {
 function handleSpotDiffTap(itemId) {
   if (spotDiffFound.has(itemId)) return;
 
+  playSound("success", 0.4);
   spotDiffFound.add(itemId);
   document.querySelectorAll(`.spotdiff-hotspot[data-item-id="${itemId}"]`).forEach((el) => {
     el.classList.add("found");
@@ -828,6 +835,7 @@ function openExtinguisherEvent(room, obj) {
 }
 
 function pullExtinguisherPin() {
+  playSound("success", 0.4);
   extinguisherPinPulled = true;
   extinguisherPinEl.style.transform = "";
   extinguisherPinEl.classList.add("pulled");
@@ -906,6 +914,7 @@ function cancelExtinguisherHold() {
 
 extinguisherPressHitEl.addEventListener("pointerdown", (e) => {
   if (!extinguisherPinPulled || extinguisherCompleted) return;
+  playSound("spray", 0.5);
   extinguisherPressHitEl.setPointerCapture(e.pointerId);
   extinguisherBodyGroupEl.classList.add("pressing");
   extinguisherPressHintEl.classList.add("hidden");
@@ -1080,6 +1089,7 @@ function bindPipeSupplyDrag(supplyEl) {
       segment.dataset.pieceType === supplyEl.dataset.pieceType;
 
     if (isMatch) {
+      playSound("success", 0.4);
       segment.classList.remove("cracked");
       segment.classList.add("fixed");
       const crackIcon = segment.querySelector(".pipe-crack-svg");
@@ -1179,6 +1189,7 @@ function resetPlayerIconPosition(instant) {
 
 // 돋보기(플레이어 아이콘)가 오브젝트 위치에서 확대되며 이벤트 화면이 그 안에서 열리는 것처럼 연출
 function openLensOverlay(overlayEl, obj) {
+  playSound("open", 0.5);
   playerIconEl.style.left = `${obj.x}%`;
   playerIconEl.style.top = `${obj.y}%`;
   playerIconEl.classList.remove("hop", "zoom-out");
@@ -1229,6 +1240,7 @@ function slideToRoomIndex(nextIndex, direction) {
   if (nextIndex < 0 || nextIndex >= ROOMS.length || nextIndex === state.roomIndex) return;
 
   roomTransitionLock = true;
+  playSound("walk", 0.35);
   hideMessage();
 
   const exitX = direction > 0 ? "-100%" : "100%";
@@ -1268,6 +1280,7 @@ function fadeToRoomIndex(nextIndex) {
   if (nextIndex < 0 || nextIndex >= ROOMS.length || nextIndex === state.roomIndex) return;
 
   roomTransitionLock = true;
+  playSound("walk", 0.35);
   hideMessage();
 
   roomView.classList.add("door-fade-out");
@@ -1311,6 +1324,8 @@ roomArrowRight.addEventListener("click", () => goToRoom(1));
 // 방 안 어디를 터치하든 돋보기(플레이어 아이콘)가 그 위치로 이동
 roomView.addEventListener("click", (e) => {
   if (roomTransitionLock) return;
+  // 오브젝트 클릭은 버튼 탭 효과음이 이미 따로 재생되므로, 빈 자리를 눌렀을 때만 효과음을 추가로 재생
+  if (!e.target.closest(".room-object")) playSound("click", 0.25);
   const rect = roomView.getBoundingClientRect();
   const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
   const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
@@ -1557,13 +1572,14 @@ function playIntroLine(text, { unblurAfter = true, onComplete } = {}) {
   roomStage.classList.remove("no-transition");
 
   introLineOverlay.classList.add("visible");
+  playSound("type", 0.4);
 
   let i = 0;
   function typeNext() {
     if (i < text.length) {
       introLineText.textContent += text[i];
       i++;
-      introLineTimer = setTimeout(typeNext, 110);
+      introLineTimer = setTimeout(typeNext, 140);
     } else {
       introLineTimer = setTimeout(() => {
         introLineOverlay.classList.remove("visible");
@@ -1585,6 +1601,7 @@ function playInvestigationIntro() {
 
 function startGame() {
   state.started = true;
+  playBackgroundMusic();
   // 추리 시작 인트로 문구가 사라질 때까지는 "intro" 단계로 두어 타이머가 흐르지 않도록 함 (playInvestigationIntro 완료 시 "playing"으로 전환)
   // TODO: 카운트다운 임시 비활성화. 복구하려면 "countdown"으로 되돌리고 countdownOverlay를 보여주면 됨
   state.phase = "intro";
@@ -1653,10 +1670,11 @@ function animateHudScore(target, duration = 2400) {
   hudScoreAnimId = requestAnimationFrame(tick);
 }
 
-function addScore(amount) {
+function addScore(amount, { silent = false } = {}) {
   if (state.phase !== "playing") return;
   state.score += amount;
   setTimeout(() => {
+    if (!silent) playSound("success", 0.4);
     animateHudScore(state.score);
   }, 500);
 }

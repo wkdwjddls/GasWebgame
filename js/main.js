@@ -29,6 +29,7 @@ cutsceneOverlay.addEventListener("click", () => {
     return;
   }
   cutsceneOverlay.classList.add("hidden");
+  stopWarningLoop();
   assignCulprit();
   startGame();
 });
@@ -39,6 +40,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
   cutsceneRevealIndex = 0;
   cutsceneLines.forEach((line) => line.classList.remove("revealed"));
   cutsceneOverlay.classList.remove("hidden");
+  playWarningLoop();
   revealNextCutsceneLine();
 
   lastTime = performance.now();
