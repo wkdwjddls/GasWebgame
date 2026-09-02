@@ -2044,6 +2044,93 @@ body {
   }
 }
 
+/* 범인이 남기고 간 예고장: 낡은 종이 쪽지 느낌 */
+.cutscene-note {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  width: 88%;
+  padding: 38px 26px 30px;
+  transform: rotate(-2.5deg);
+  animation: cutscene-note-drop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* 종이 배경과 찢어진 가장자리는 별도 레이어에 그려서
+   도장/테이프가 clip-path에 함께 잘려나가지 않도록 함 */
+.cutscene-note::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(120, 96, 56, 0.05) 0px,
+      rgba(120, 96, 56, 0.05) 2px,
+      transparent 2px,
+      transparent 4px
+    ),
+    radial-gradient(circle at 12% 15%, rgba(120, 96, 56, 0.18), transparent 45%),
+    radial-gradient(circle at 88% 85%, rgba(120, 96, 56, 0.16), transparent 45%),
+    linear-gradient(165deg, #f1e4c2 0%, #e6d3a3 55%, #dcc691 100%);
+  clip-path: polygon(
+    1% 4%, 8% 0%, 22% 2%, 35% 0%, 48% 2%, 61% 0%, 75% 2%, 89% 0%, 99% 3%,
+    100% 15%, 98% 30%, 100% 45%, 97% 60%, 100% 75%, 98% 90%, 100% 97%,
+    88% 100%, 74% 98%, 60% 100%, 46% 98%, 33% 100%, 19% 98%, 6% 100%, 0% 92%,
+    2% 78%, 0% 63%, 3% 48%, 0% 33%, 2% 18%
+  );
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), inset 0 0 30px rgba(90, 60, 20, 0.25);
+}
+
+@keyframes cutscene-note-drop {
+  from {
+    opacity: 0;
+    transform: rotate(-2.5deg) translateY(-40px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-2.5deg) translateY(0) scale(1);
+  }
+}
+
+.cutscene-note-stamp {
+  position: absolute;
+  top: -14px;
+  right: -6px;
+  z-index: 2;
+  padding: 6px 16px;
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: rgba(180, 20, 20, 0.85);
+  border: 3px solid rgba(180, 20, 20, 0.85);
+  border-radius: 6px;
+  transform: rotate(10deg);
+  background: rgba(241, 228, 194, 0.85);
+  text-shadow: 0 0 2px rgba(180, 20, 20, 0.3);
+}
+
+.cutscene-note-tape {
+  position: absolute;
+  width: 70px;
+  height: 26px;
+  background: rgba(255, 250, 230, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.cutscene-note-tape-left {
+  top: -12px;
+  left: 18px;
+  transform: rotate(-8deg);
+}
+
+.cutscene-note-tape-right {
+  bottom: -12px;
+  right: 24px;
+  transform: rotate(6deg);
+}
+
 /* 붉은 경광등이 번쩍이는 듯한 스트로브 효과 */
 .cutscene-strobe {
   position: absolute;
@@ -2090,7 +2177,7 @@ body {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   max-width: 100%;
 }
 
@@ -2106,16 +2193,69 @@ body {
 }
 
 .cutscene-line {
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: #e7ebff;
+  font-family: "Gaegu", "Noto Sans KR", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.55;
+  color: #2a1c10;
   opacity: 0;
+}
+
+.cutscene-note .cutscene-line:nth-child(odd) {
+  transform: rotate(-1.2deg);
+}
+
+.cutscene-note .cutscene-line:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.cutscene-lastline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+}
+
+.cutscene-signature {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: rgba(120, 20, 20, 0.85);
+  transform: rotate(-4deg);
 }
 
 .cutscene-line.revealed {
   opacity: 1;
   animation: cutscene-line-in 0.4s ease;
+}
+
+/* 예고장 아래, 게임이 직접 건네는 강조 문구 */
+.cutscene-callout {
+  position: relative;
+  z-index: 1;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #ffde7a;
+  text-shadow: 0 0 8px rgba(255, 183, 3, 0.55), 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.cutscene-line.cutscene-callout.revealed {
+  animation-name: cutscene-line-in, cutscene-callout-glow;
+  animation-duration: 0.4s, 1.6s;
+  animation-timing-function: ease, ease-in-out;
+  animation-iteration-count: 1, infinite;
+}
+
+@keyframes cutscene-callout-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(255, 183, 3, 0.55), 0 1px 3px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(255, 183, 3, 0.85), 0 1px 3px rgba(0, 0, 0, 0.7);
+  }
 }
 
 /* 안전 상식 퀴즈 */

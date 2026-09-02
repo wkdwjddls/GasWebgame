@@ -13,9 +13,6 @@ const cutsceneOverlay = document.getElementById("incident-cutscene");
 const cutsceneLines = Array.from(document.querySelectorAll(".cutscene-line"));
 let cutsceneRevealIndex = 0;
 
-const today = new Date();
-document.getElementById("cutscene-date").textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-
 function revealNextCutsceneLine() {
   if (cutsceneRevealIndex < cutsceneLines.length) {
     cutsceneLines[cutsceneRevealIndex].classList.add("revealed");

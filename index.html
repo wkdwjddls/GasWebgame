@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/images/im_돋보기.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -200,12 +200,23 @@
   <div id="incident-cutscene" class="hidden">
     <div class="cutscene-strobe"></div>
     <div class="cutscene-stripe"></div>
-    <span class="cutscene-icon">🚨</span>
-    <div class="cutscene-lines">
-      <p class="cutscene-line"><span id="cutscene-date"></span> 가스폭발을 예고한 범인</p>
-      <p class="cutscene-line">가스 폭발을 막고 범인을 찾기 위해선</p>
-      <p class="cutscene-line">가스탐정단의 도움이 필요합니다!</p>
+
+    <div class="cutscene-note">
+      <span class="cutscene-note-stamp">예고장</span>
+      <div class="cutscene-note-tape cutscene-note-tape-left"></div>
+      <div class="cutscene-note-tape cutscene-note-tape-right"></div>
+      <div class="cutscene-lines">
+        <p class="cutscene-line">가스폭발을 위한 준비는 다 끝났다.</p>
+        <p class="cutscene-line">폭발을 피하고 싶다면 집안 곳곳에 숨겨진 단서를 찾아 나를 잡아봐.</p>
+        <p class="cutscene-line cutscene-lastline">
+          <span class="cutscene-time">시간은 많지 않아.</span>
+          <span class="cutscene-signature">—범인—</span>
+        </p>
+      </div>
     </div>
+
+    <p class="cutscene-callout cutscene-line">가스탐정단의 도움이 필요해요</p>
+
     <div class="cutscene-stripe"></div>
   </div>
 
