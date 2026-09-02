@@ -1616,6 +1616,7 @@ function updateDetectiveTitle(score) {
   detectiveTitleEl.classList.remove("levelup");
   void detectiveTitleEl.offsetWidth; // restart the level-up pulse even if it's already mid-play
   detectiveTitleEl.classList.add("levelup");
+  playSound("success", 0.5);
 }
 
 function animateScoreCountUp(target, duration = 3000, onComplete) {
@@ -1641,6 +1642,8 @@ function endGame() {
 
   state.phase = "ended";
   state.started = false;
+
+  playSound("success", 0.5);
 
   countdownOverlay.classList.add("hidden");
   timerBarWrap.classList.add("hidden");
