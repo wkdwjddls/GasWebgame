@@ -91,7 +91,7 @@ const PIPE_CRACK_COUNT = 2; // 균열이 있는 배관 개수
 const SUSPECTS = [
   {
     id: "cook",
-    name: "용의자 A",
+    name: "김태훈",
     role: "요리사",
     icon: "🧑‍🍳",
     image: "assets/images/sus_1.png",
@@ -100,7 +100,7 @@ const SUSPECTS = [
   },
   {
     id: "repair",
-    name: "용의자 B",
+    name: "최동수",
     role: "설비 기사",
     icon: "🔧",
     image: "assets/images/sus_2.png",
@@ -109,7 +109,7 @@ const SUSPECTS = [
   },
   {
     id: "landlord",
-    name: "용의자 C",
+    name: "한미영",
     role: "집주인",
     icon: "🧑‍🎓",
     image: "assets/images/sus_3.png",
@@ -176,44 +176,44 @@ const STARTING_ROOM_INDEX = ROOMS.findIndex((room) => room.id === "living-room")
 
 const QUIZZES = [
   {
-    question: "가스 냄새가 날 때 가장 먼저 해야 할 행동은?",
+    question: "가스레인지 사용 후 불만 끄면 가스밸브는 확인하지 않아도 된다.",
     options: [
-      { text: "창문을 열어 환기한다", correct: true },
-      { text: "전등 스위치를 켠다", correct: false },
+      { text: "O", correct: false },
+      { text: "X", correct: true },
     ],
-    explanation: "가스가 누출되면 즉시 창문을 열어 환기하고 밸브를 잠가야 해요. 전기 스위치 조작은 불꽃을 일으켜 위험해요!",
+    explanation: "불을 끈 후에도 중간 밸브를 반드시 잠가야 해요. 밸브를 확인하지 않으면 가스가 계속 새어 나올 수 있어요!",
   },
   {
-    question: "가스레인지 사용 후 반드시 해야 할 일은?",
+    question: "가스레인지 주변에는 휴지나 종이 같은 인화성 물질을 가까이 두지 않는 것이 좋다.",
     options: [
-      { text: "중간 밸브를 잠근다", correct: true },
-      { text: "그대로 외출한다", correct: false },
+      { text: "O", correct: true },
+      { text: "X", correct: false },
     ],
-    explanation: "사용 후 밸브를 잠그지 않으면 가스가 계속 새어 나올 수 있어요. 사용 후엔 꼭 밸브를 잠가주세요!",
+    explanation: "인화성 물질이 가까이 있으면 작은 불씨에도 쉽게 옮겨붙어 화재로 이어질 수 있어요.",
   },
   {
-    question: "가스가 새는지 확인할 때 좋은 방법은?",
+    question: "가스레인지 위에 냄비를 올려둔 채 자리를 비워도 잠깐이라면 괜찮다.",
     options: [
-      { text: "비눗물을 발라 확인한다", correct: true },
-      { text: "라이터 불로 확인한다", correct: false },
+      { text: "O", correct: false },
+      { text: "X", correct: true },
     ],
-    explanation: "라이터 같은 불씨로 확인하면 폭발할 수 있어 매우 위험해요. 반드시 비눗물 거품으로 누출 여부를 확인하세요!",
+    explanation: "아주 잠깐이라도 자리를 비우면 냄비가 끓어 넘치거나 과열되어 화재로 이어질 수 있어요.",
   },
   {
-    question: "가스레인지 사용 중 잠깐 자리를 비워야 한다면?",
+    question: "가스 안전사고는 대부분 가스 냄새가 강하게 날 때만 발생한다.",
     options: [
-      { text: "불을 켠 채로 잠깐 비운다", correct: false },
-      { text: "반드시 불을 끄고 자리를 비운다", correct: true },
+      { text: "O", correct: false },
+      { text: "X", correct: true },
     ],
-    explanation: "아주 잠깐이라도 불을 켠 채 자리를 비우면 위험해요. 자리를 비울 땐 반드시 불을 먼저 꺼주세요.",
+    explanation: "냄새를 느끼지 못해도 미세한 누출이나 부주의로 사고가 발생할 수 있어 평소 점검이 중요해요.",
   },
   {
-    question: "가스 배관 근처에 물건을 보관할 때 주의할 점은?",
+    question: "가스 냄새가 나더라도 창문을 열기 위해 전등 스위치를 먼저 켜도 된다.",
     options: [
-      { text: "물건을 배관에 밀착시켜 쌓아둔다", correct: false },
-      { text: "배관과 거리를 두고 눌리지 않게 보관한다", correct: true },
+      { text: "O", correct: false },
+      { text: "X", correct: true },
     ],
-    explanation: "배관 주변에 물건을 쌓아두면 배관이 눌리거나 손상되어 가스가 샐 수 있어요. 배관과는 충분히 거리를 두고 보관하세요.",
+    explanation: "전기 스위치를 조작하면 불꽃이 튀어 폭발할 위험이 있어요. 스위치 조작 전에 창문부터 열어 환기하세요!",
   },
 ];
 
